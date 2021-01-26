@@ -13,12 +13,13 @@ void ASDTAIController::Tick(float deltaTime)
         FVector Start = pawn->GetActorLocation();
         FVector End = Start + 1000*pawn->GetActorRotation().Vector();
         TArray < FHitResult > HitResult;
-        World->LineTraceMultiByChannel(HitResult, Start, End, ECollisionChannel::ECC_WorldStatic);
         DrawDebugLine(World, Start, End, FColor::Orange, false, 0.1f);
+
+        World->LineTraceMultiByChannel(HitResult, Start, End, ECollisionChannel::ECC_WorldStatic);
 
         UE_LOG(LogTemp, Warning, TEXT("%f"), HitResult[0].Distance);
 
-        AddAiMovement(pawn, FVector(1.0f, 0.0f, 0.0f));
+        //AddAiMovement(pawn, FVector(1.0f, 0.0f, 0.0f));
     }
 }
 
