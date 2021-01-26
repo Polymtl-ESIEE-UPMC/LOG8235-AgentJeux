@@ -16,4 +16,8 @@ class SOFTDESIGNTRAINING_API ASDTAIController : public AAIController
     GENERATED_BODY()
 public:
     virtual void Tick(float deltaTime) override;
+    void AddAiMovement(APawn* pawn, FVector directionVector);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    float movementSpeed = 0.5f;
 };
