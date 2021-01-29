@@ -17,7 +17,15 @@ class SOFTDESIGNTRAINING_API ASDTAIController : public AAIController
 public:
     virtual void Tick(float deltaTime) override;
     void AddAiMovement(APawn* pawn, FVector directionVector);
+    bool isPlayerVisible(APawn* pawn, FVector playerPosition, FVector viewDirection);
+    TArray<FHitResult> CollectVisibleElements(APawn* pawn, UWorld* World, FVector viewDirection);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float movementSpeed = 0.5f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    float viewDistance = 1000;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    float viewAngle = 45;
 };

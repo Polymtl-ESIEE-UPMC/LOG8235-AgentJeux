@@ -10,35 +10,82 @@ void ASDTAIController::Tick(float deltaTime)
     APawn* const pawn = GetPawn();
     UWorld* const World = GetWorld();
     
-    if (pawn) {
+    FVector viewDirection = pawn->GetActorRotation().Vector();
+        
+    TArray<FHitResult> visibleElements = CollectVisibleElements(pawn, World, viewDirection);
+
+    FVector playerPosition = World->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+
+    if (isPlayerVisible(pawn, playerPosition, viewDirection)) {
+        //check if powered_up
+    }
+    else {
+        for (int i = 0; i < visibleElements.Num(); ++i) {
+            if (visibleElements[i].GetComponent() != nullptr)
+            {
+                // check if a consumable is detected
+                if (visibleElements[i].GetComponent()->GetCollisionObjectType() == ECC_GameTraceChannel5 ) {
+                    //do something
+                }
+
+                // check if a wall is detected
+                if (visibleElements[i].GetComponent()->GetCollisionObjectType() == ECC_WorldStatic) {
+                    //do something
+                }
+            }
+    
+        }
+    }
+
+
+    //AddAiMovement(pawn, viewDirection);
+    
+}
+
+bool ASDTAIController::isPlayerVisible(APawn* pawn, FVector playerPosition , FVector viewDirection) {
+    FVector playerDirection = playerPosition - pawn->GetActorLocation();
+    int playerDistance = playerDirection.Size();
+    
+    if (playerDistance > viewDistance)
+        return false;
+
+    int angle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(viewDirection, playerDirection)));
+
+    return FMath::Abs(angle) <= viewAngle;
+}
+
+TArray<FHitResult> ASDTAIController::CollectVisibleElements(APawn* pawn, UWorld* World, FVector viewDirection) {
         // position initiale de l'agent
         FVector Start = pawn->GetActorLocation();
 
         // Identification des paramètres pour les trois lancer de rayons
-        FVector viewDirection = pawn->GetActorRotation().Vector();
         int rayDistance = 500 ;
-        FVector EndLeft = Start + rayDistance * viewDirection.RotateAngleAxis(-45, FVector(0,0,1));
+        FVector EndLeft = Start + rayDistance * viewDirection.RotateAngleAxis(-30, FVector(0,0,1));
         FVector EndMiddle = Start + rayDistance * viewDirection;
-        FVector EndRight = Start + rayDistance * viewDirection.RotateAngleAxis(45, FVector(0, 0, 1));
-        FHitResult HitResult;
+        FVector EndRight = Start + rayDistance * viewDirection.RotateAngleAxis(30, FVector(0, 0, 1));
+        FHitResult HitResultLeft, HitResultMiddle, HitResultRight;
         TArray<TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes;
         FCollisionObjectQueryParams ObjectQueryParams(FCollisionObjectQueryParams::AllObjects);
         FCollisionQueryParams QueryParams = FCollisionQueryParams::DefaultQueryParam;
         QueryParams.AddIgnoredActor(pawn);
 
-        World->LineTraceSingleByObjectType(HitResult, Start, EndLeft, ObjectQueryParams, QueryParams);
-        World->LineTraceSingleByObjectType(HitResult, Start, EndRight, ObjectQueryParams, QueryParams);
-        World->LineTraceSingleByObjectType(HitResult, Start, EndMiddle, ObjectQueryParams, QueryParams);
+        World->LineTraceSingleByObjectType(HitResultLeft, Start, EndLeft, ObjectQueryParams, QueryParams);
+        World->LineTraceSingleByObjectType(HitResultMiddle, Start, EndRight, ObjectQueryParams, QueryParams);
+        World->LineTraceSingleByObjectType(HitResultRight, Start, EndMiddle, ObjectQueryParams, QueryParams);
 
         //ajout de ligne de debug dans le jeu pour visualiser les lancer de rayons
         DrawDebugLine(World, Start, EndLeft, FColor::Orange, false, 0.1f);
         DrawDebugLine(World, Start, EndMiddle, FColor::Orange, false, 0.1f);
         DrawDebugLine(World, Start, EndRight, FColor::Orange, false, 0.1f);
 
-        //AddAiMovement(pawn, viewDirection);
-    }
+        TArray<FHitResult> visibleElements;
+        visibleElements.Add(HitResultLeft);
+        visibleElements.Add(HitResultMiddle);
+        visibleElements.Add(HitResultRight);
+        return visibleElements;
 }
 
+// Add a movement input to the pawn and set the rotation to be in the same direction
 void ASDTAIController::AddAiMovement(APawn* pawn, FVector movementDirection) {
     // Adding movement 
     movementDirection.Normalize();
