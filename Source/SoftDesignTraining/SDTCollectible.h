@@ -25,5 +25,7 @@ public:
 
 protected:
     FTimerHandle m_CollectCooldownTimer;
+    USoundBase* Sound;
+    UParticleSystem* Particles;
 	
 };
