@@ -58,12 +58,26 @@ bool ASDTAIController::isPlayerVisible(APawn* pawn, FVector playerPosition , FVe
     FVector playerDirection = playerPosition - pawn->GetActorLocation();
     int playerDistance = playerDirection.Size();
     
+    // verify if player is within the view distance and view angle
     if (playerDistance > viewDistance)
         return false;
-
     int angle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(viewDirection, playerDirection)));
 
-    return FMath::Abs(angle) <= viewAngle;
+    
+    if (FMath::Abs(angle) <= viewAngle) {
+       // raycast to see if the player is visible
+
+        FVector Start = pawn->GetActorLocation();
+        FHitResult HitResult;
+        FCollisionObjectQueryParams ObjectQueryParams(FCollisionObjectQueryParams::AllObjects);
+        FCollisionQueryParams QueryParams = FCollisionQueryParams::DefaultQueryParam;
+        QueryParams.AddIgnoredActor(pawn);
+
+        GetWorld()->LineTraceSingleByObjectType(HitResult, Start, playerPosition, ObjectQueryParams, QueryParams);
+        DrawDebugLine(GetWorld(), Start, playerPosition, FColor::Orange, false, 0.1f);
+        return HitResult.GetComponent()->GetCollisionObjectType() == ECC_GameTraceChannel4;
+    }
+    return false;
 }
 
 TArray<FHitResult> ASDTAIController::CollectVisibleElements(APawn* pawn, UWorld* World, FVector viewDirection) {
@@ -76,7 +90,6 @@ TArray<FHitResult> ASDTAIController::CollectVisibleElements(APawn* pawn, UWorld*
         FVector EndMiddle = Start + rayDistance * viewDirection;
         FVector EndRight = Start + rayDistance * viewDirection.RotateAngleAxis(30, FVector(0, 0, 1));
         FHitResult HitResultLeft, HitResultMiddle, HitResultRight;
-        TArray<TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes;
         FCollisionObjectQueryParams ObjectQueryParams(FCollisionObjectQueryParams::AllObjects);
         FCollisionQueryParams QueryParams = FCollisionQueryParams::DefaultQueryParam;
         QueryParams.AddIgnoredActor(pawn);
