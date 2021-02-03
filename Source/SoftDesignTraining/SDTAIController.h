@@ -18,6 +18,7 @@ public:
     virtual void Tick(float deltaTime) override;
     void AddAiMovement(APawn* pawn, FVector directionVector);
     bool isPlayerVisible(APawn* pawn, FVector playerPosition, FVector viewDirection);
+    bool DetectDeathZone(APawn* pawn, UWorld* World, FVector viewDirection);
     TArray<FHitResult> CollectVisibleElements(APawn* pawn, UWorld* World, FVector viewDirection);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
