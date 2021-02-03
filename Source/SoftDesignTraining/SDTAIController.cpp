@@ -63,6 +63,7 @@ TArray<FHitResult> ASDTAIController::CollectVisibleElements(APawn* pawn, UWorld*
         FVector EndLeft = Start + rayDistance * viewDirection.RotateAngleAxis(-30, FVector(0,0,1));
         FVector EndMiddle = Start + rayDistance * viewDirection;
         FVector EndRight = Start + rayDistance * viewDirection.RotateAngleAxis(30, FVector(0, 0, 1));
+        FVector EndDown = Start + rayDistance * viewDirection.RotateAngleAxis(40, FVector(1, 0, 0));
         FHitResult HitResultLeft, HitResultMiddle, HitResultRight, HitResultDown;
         TArray<TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes;
         FCollisionObjectQueryParams ObjectQueryParams(FCollisionObjectQueryParams::AllObjects);
@@ -72,16 +73,19 @@ TArray<FHitResult> ASDTAIController::CollectVisibleElements(APawn* pawn, UWorld*
         World->LineTraceSingleByObjectType(HitResultLeft, Start, EndLeft, ObjectQueryParams, QueryParams);
         World->LineTraceSingleByObjectType(HitResultMiddle, Start, EndRight, ObjectQueryParams, QueryParams);
         World->LineTraceSingleByObjectType(HitResultRight, Start, EndMiddle, ObjectQueryParams, QueryParams);
+        World->LineTraceSingleByObjectType(HitResultDown, Start, EndDown, ObjectQueryParams, QueryParams);
 
         //ajout de ligne de debug dans le jeu pour visualiser les lancer de rayons
         DrawDebugLine(World, Start, EndLeft, FColor::Orange, false, 0.1f);
         DrawDebugLine(World, Start, EndMiddle, FColor::Orange, false, 0.1f);
         DrawDebugLine(World, Start, EndRight, FColor::Orange, false, 0.1f);
+        DrawDebugLine(World, Start, EndDown, FColor::Orange, false, 0.1f);
 
         TArray<FHitResult> visibleElements;
         visibleElements.Add(HitResultLeft);
         visibleElements.Add(HitResultMiddle);
         visibleElements.Add(HitResultRight);
+        visibleElements.Add(HitResultDown);
         return visibleElements;
 }
 

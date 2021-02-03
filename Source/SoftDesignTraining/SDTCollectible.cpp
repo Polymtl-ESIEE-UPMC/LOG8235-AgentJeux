@@ -20,8 +20,10 @@ void ASDTCollectible::Collect()
     GetWorld()->GetTimerManager().SetTimer(m_CollectCooldownTimer, this, &ASDTCollectible::OnCooldownDone, m_CollectCooldownDuration, false);
     
     //play the sound and animation
-    UGameplayStatics::PlaySoundAtLocation(GetWorld(), Sound, GetActorLocation());
-    UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Particles, GetActorLocation());
+    if (GetStaticMeshComponent()->IsVisible() ){
+        UGameplayStatics::PlaySoundAtLocation(GetWorld(), Sound, GetActorLocation());
+        UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Particles, GetActorLocation());
+    }
 
     GetStaticMeshComponent()->SetVisibility(false);
 }
