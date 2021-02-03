@@ -3,6 +3,7 @@
 #include "SDTAIController.h"
 #include "SDTCollectible.h"
 #include "SoftDesignTraining.h"
+#include "SoftDesignTrainingMainCharacter.h"
 #include "DrawDebugHelpers.h"
 
 void ASDTAIController::Tick(float deltaTime)
@@ -22,6 +23,13 @@ void ASDTAIController::Tick(float deltaTime)
     }
     else if (playerPawn && isPlayerVisible(pawn, playerPawn->GetActorLocation(), viewDirection)) {
         //check if powered_up
+        ASoftDesignTrainingMainCharacter*  mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(World->GetFirstPlayerController()->GetCharacter());
+        if (mainCharacter->IsPoweredUp()) {
+            // main character is powerd-up, run
+        }
+        else {
+            // main character is not powered-up, attack
+        }
     }
     else {
         for (int i = 0; i < visibleElements.Num(); ++i) {

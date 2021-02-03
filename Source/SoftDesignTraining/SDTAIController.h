@@ -28,5 +28,5 @@ public:
     float viewDistance = 1000;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-    float viewAngle = 45;
+    float viewAngle = 40;
 };
