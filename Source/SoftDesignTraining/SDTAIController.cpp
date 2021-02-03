@@ -14,9 +14,9 @@ void ASDTAIController::Tick(float deltaTime)
         
     TArray<FHitResult> visibleElements = CollectVisibleElements(pawn, World, viewDirection);
 
-    FVector playerPosition = World->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+    APawn* playerPawn = World->GetFirstPlayerController()->GetPawn();
 
-    if (isPlayerVisible(pawn, playerPosition, viewDirection)) {
+    if (playerPawn && isPlayerVisible(pawn, playerPawn->GetActorLocation(), viewDirection)) {
         //check if powered_up
     }
     else {
@@ -63,7 +63,7 @@ TArray<FHitResult> ASDTAIController::CollectVisibleElements(APawn* pawn, UWorld*
         FVector EndLeft = Start + rayDistance * viewDirection.RotateAngleAxis(-30, FVector(0,0,1));
         FVector EndMiddle = Start + rayDistance * viewDirection;
         FVector EndRight = Start + rayDistance * viewDirection.RotateAngleAxis(30, FVector(0, 0, 1));
-        FHitResult HitResultLeft, HitResultMiddle, HitResultRight;
+        FHitResult HitResultLeft, HitResultMiddle, HitResultRight, HitResultDown;
         TArray<TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes;
         FCollisionObjectQueryParams ObjectQueryParams(FCollisionObjectQueryParams::AllObjects);
         FCollisionQueryParams QueryParams = FCollisionQueryParams::DefaultQueryParam;
