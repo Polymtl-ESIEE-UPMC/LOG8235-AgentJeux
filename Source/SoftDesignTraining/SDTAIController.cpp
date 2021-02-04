@@ -5,56 +5,95 @@
 #include "SoftDesignTraining.h"
 #include "SoftDesignTrainingMainCharacter.h"
 #include "DrawDebugHelpers.h"
+#include "SDTUtils.h"
 
 void ASDTAIController::Tick(float deltaTime)
 {
     APawn* const pawn = GetPawn();
     UWorld* const World = GetWorld();
-    
+
     FVector viewDirection = pawn->GetActorRotation().Vector();
-        
-    TArray<FHitResult> visibleElements = CollectVisibleElements(pawn, World, viewDirection);
+
+    TArray<FHitResult> HitResults = CollectActorsInFOV(pawn, World);
+
     bool deathZoneAhead = DetectDeathZone(pawn, World, viewDirection);
 
     APawn* playerPawn = World->GetFirstPlayerController()->GetPawn();
+    float angle = 0;
 
-    if (deathZoneAhead) {
+
+    if (deathZoneAhead)
+    {
         // do something
     }
-    else if (playerPawn && isPlayerVisible(pawn, playerPawn->GetActorLocation(), viewDirection)) {
+    else if (playerPawn && isPlayerVisible(pawn, playerPawn->GetActorLocation(), viewDirection))
+    {
         //check if powered_up
-        ASoftDesignTrainingMainCharacter*  mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(World->GetFirstPlayerController()->GetCharacter());
-        if (mainCharacter->IsPoweredUp()) {
+        ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(World->GetFirstPlayerController()->GetCharacter());
+        if (mainCharacter->IsPoweredUp())
+        {
             // main character is powerd-up, run
         }
-        else {
+        else
+        {
             // main character is not powered-up, attack
         }
     }
-    else {
-        for (int i = 0; i < visibleElements.Num(); ++i) {
-            if (visibleElements[i].GetComponent() != nullptr)
-            {
-                // check if a consumable is detected
-                if (visibleElements[i].GetComponent()->GetCollisionObjectType() == ECC_GameTraceChannel5 ) {
-                    //do something
-                }
+    else
+    {
+        float minDist = -1;
+        FHitResult ClosestHit;
 
-                // check if a wall is detected
-                if (visibleElements[i].GetComponent()->GetCollisionObjectType() == ECC_WorldStatic) {
-                    //do something
-                }
+        for (int i = 0; i < HitResults.Num(); ++i)
+        {
+            TArray<FHitResult>::ElementType HitResult = HitResults[i];
+            float dist = (HitResult.ImpactPoint - pawn->GetActorLocation()).Size();
+            if (minDist == -1 || dist < minDist)
+            {
+                minDist = dist;
+                ClosestHit = HitResult;
             }
-    
+            
+            DrawDebugDirectionalArrow(World, HitResult.ImpactPoint,
+                                      HitResult.ImpactPoint + FVector(0, 0, 200.0f), 20,
+                                      FColor::Blue,
+                                      false, 1.0f, 0, 20);
         }
+
+
+        if (ClosestHit.GetComponent() != nullptr)
+        {
+
+            FVector_NetQuantize ImpactPoint = ClosestHit.ImpactPoint;
+            FVector toTarget = ImpactPoint - pawn->GetActorLocation();
+
+            float res = toTarget.ToOrientationRotator().Yaw - pawn->GetActorRotation().Yaw;
+
+            float delta = (res / FMath::Abs(res)) * 1; //todo: Make UProperty Rotate speed
+
+            if (ClosestHit.GetComponent()->GetCollisionObjectType() == COLLISION_COLLECTIBLE)
+            {
+                angle = delta;
+            }
+
+            if (ClosestHit.GetComponent()->GetCollisionObjectType() == ECC_WorldStatic)
+            {
+                angle = -delta;
+            }
+        }
+
+        DrawDebugDirectionalArrow(World, ClosestHit.ImpactPoint,
+                                  ClosestHit.ImpactPoint + FVector(0, 0, 200.0f), 20,
+                                  FColor::Green,
+                                  false, 1.0f, 0, 50);
+
     }
 
-
-    //AddAiMovement(pawn, viewDirection);
-    
+    AddAiMovement(pawn, viewDirection, angle);
 }
 
-bool ASDTAIController::isPlayerVisible(APawn* pawn, FVector playerPosition , FVector viewDirection) {
+bool ASDTAIController::isPlayerVisible(APawn* pawn, FVector playerPosition, FVector viewDirection)
+{
     FVector playerDirection = playerPosition - pawn->GetActorLocation();
     int playerDistance = playerDirection.Size();
     
@@ -80,37 +119,47 @@ bool ASDTAIController::isPlayerVisible(APawn* pawn, FVector playerPosition , FVe
     return false;
 }
 
-TArray<FHitResult> ASDTAIController::CollectVisibleElements(APawn* pawn, UWorld* World, FVector viewDirection) {
-        // position initiale de l'agent
-        FVector Start = pawn->GetActorLocation();
+TArray<FHitResult> ASDTAIController::CollectVisibleWalls(APawn* pawn, UWorld* World)
+{
+    // position initiale de l'agent
+    FVector Start = pawn->GetActorLocation();
+    FVector viewDirection = pawn->GetActorRotation().Vector();
 
-        // Identification des paramètres pour les trois lancer de rayons
-        int rayDistance = 500 ;
-        FVector EndLeft = Start + rayDistance * viewDirection.RotateAngleAxis(-30, FVector(0,0,1));
-        FVector EndMiddle = Start + rayDistance * viewDirection;
-        FVector EndRight = Start + rayDistance * viewDirection.RotateAngleAxis(30, FVector(0, 0, 1));
-        FHitResult HitResultLeft, HitResultMiddle, HitResultRight;
-        FCollisionObjectQueryParams ObjectQueryParams(FCollisionObjectQueryParams::AllObjects);
-        FCollisionQueryParams QueryParams = FCollisionQueryParams::DefaultQueryParam;
-        QueryParams.AddIgnoredActor(pawn);
+    // Identification des paramètres pour les trois lancer de rayons
+    FVector EndLeft = Start + viewDistance * viewDirection.RotateAngleAxis(-viewAngle / 2.0f, FVector(0, 0, 1));
+    FVector EndMiddle = Start + viewDistance * viewDirection;
+    FVector EndRight = Start + viewDistance * viewDirection.RotateAngleAxis(viewAngle / 2.0f, FVector(0, 0, 1));
 
-        World->LineTraceSingleByObjectType(HitResultLeft, Start, EndLeft, ObjectQueryParams, QueryParams);
-        World->LineTraceSingleByObjectType(HitResultMiddle, Start, EndRight, ObjectQueryParams, QueryParams);
-        World->LineTraceSingleByObjectType(HitResultRight, Start, EndMiddle, ObjectQueryParams, QueryParams);
+    FHitResult HitResultLeft, HitResultMiddle, HitResultRight;
 
-        //ajout de ligne de debug dans le jeu pour visualiser les lancer de rayons
-        DrawDebugLine(World, Start, EndLeft, FColor::Orange, false, 0.1f);
-        DrawDebugLine(World, Start, EndMiddle, FColor::Orange, false, 0.1f);
-        DrawDebugLine(World, Start, EndRight, FColor::Orange, false, 0.1f);
+    FCollisionObjectQueryParams ObjectQueryParams = FCollisionObjectQueryParams(ECC_WorldStatic);
+    FCollisionQueryParams QueryParams = FCollisionQueryParams::DefaultQueryParam;
 
-        TArray<FHitResult> visibleElements;
-        visibleElements.Add(HitResultLeft);
-        visibleElements.Add(HitResultMiddle);
-        visibleElements.Add(HitResultRight);
-        return visibleElements;
+    TArray<FHitResult> HitResults;
+
+    World->LineTraceSingleByObjectType(HitResultLeft, Start, EndLeft, ObjectQueryParams, QueryParams);
+
+    World->LineTraceSingleByObjectType(HitResultMiddle, Start, EndMiddle, ObjectQueryParams, QueryParams);
+
+    World->LineTraceSingleByObjectType(HitResultRight, Start, EndRight, ObjectQueryParams, QueryParams);
+
+
+    //ajout de ligne de debug dans le jeu pour visualiser les lancer de rayons
+    DrawDebugLine(World, Start, EndLeft, FColor::Orange, false, 0.1f);
+    DrawDebugLine(World, Start, EndMiddle, FColor::Orange, false, 0.1f);
+    DrawDebugLine(World, Start, EndRight, FColor::Orange, false, 0.1f);
+
+
+    HitResults.Add(HitResultLeft);
+    HitResults.Add(HitResultMiddle);
+    HitResults.Add(HitResultRight);
+
+
+    return HitResults;
 }
 
-bool ASDTAIController::DetectDeathZone(APawn* pawn, UWorld* World, FVector viewDirection) {
+bool ASDTAIController::DetectDeathZone(APawn* pawn, UWorld* World, FVector viewDirection)
+{
     // Identification des paramètres pour les trois lancer de rayons
     int rayDistance = 500;
     FVector Start = pawn->GetActorLocation();
@@ -129,23 +178,64 @@ bool ASDTAIController::DetectDeathZone(APawn* pawn, UWorld* World, FVector viewD
 }
 
 // Add a movement input to the pawn and set the rotation to be in the same direction
-void ASDTAIController::AddAiMovement(APawn* pawn, FVector movementDirection) {
+void ASDTAIController::AddAiMovement(APawn* pawn, FVector movementDirection, float rotateAngle)
+{
     // Adding movement 
     movementDirection.Normalize();
     pawn->AddMovementInput(movementDirection, movementSpeed);
 
-    // get current rotation
-    FVector viewDirection = pawn->GetActorRotation().Vector();
-
-    //finding the angle between the view direction and the movement direction
-    float rotationAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(viewDirection, movementDirection)));
-
     // update current rotation
-    FRotator deltaRotation = FRotator(0, rotationAngle, 0);
+    FRotator deltaRotation = FRotator(0, rotateAngle, 0);
     pawn->AddActorWorldRotation(deltaRotation);
-
 }
 
 
+TArray<FHitResult> ASDTAIController::CollectActorsInFOV(APawn const* pawn, UWorld const* World) const
+{
+    TArray<FHitResult> OverlapResults = CollectTargetActorsInFrontOfCharacter(pawn, World);
+    
+    DrawDebugCone(World, pawn->GetActorLocation(), pawn->GetActorRotation().Vector(), viewDistance, FMath::DegreesToRadians(viewAngle),
+                  FMath::DegreesToRadians(viewAngle), 24, FColor::Green);
+    
+    return OverlapResults.FilterByPredicate([World, pawn, this](FHitResult HitResult)
+    {
+        DrawDebugDirectionalArrow(World, HitResult.ImpactPoint,
+                                  HitResult.ImpactPoint + FVector(0, 0, 200.0f), 20,
+                                  FColor::Yellow,
+                                  false, 1.0f, 0, 10);
+        
+        return IsInsideCone(pawn, HitResult.ImpactPoint) && (HitResult.ImpactPoint - pawn->GetActorLocation()).Size();
+    });
+}
+
+TArray<FHitResult> ASDTAIController::CollectTargetActorsInFrontOfCharacter(APawn const* pawn, UWorld const* World) const
+{
+    const float radius = viewDistance * FMath::Atan(FMath::DegreesToRadians(viewAngle));
+
+    FCollisionShape CollisionShape;
+    TArray<FHitResult> HitResults;
+
+    CollisionShape.SetSphere(radius);
+    FCollisionQueryParams QueryParams = FCollisionQueryParams::DefaultQueryParam;
+    QueryParams.AddIgnoredActor(pawn);
+    FVector Pos = pawn->GetActorLocation() + pawn->GetActorForwardVector() * viewDistance;
+
+    World->SweepMultiByObjectType(HitResults, pawn->GetActorLocation(), Pos,
+                                  FQuat::Identity, FCollisionObjectQueryParams::AllObjects,
+                                  CollisionShape, QueryParams);
 
 
+    DrawDebugSphere(World, pawn->GetActorLocation(), radius, 12, FColor::Silver);
+    DrawDebugSphere(World, Pos, radius, 12, FColor::Silver);
+
+    return HitResults;
+}
+
+bool ASDTAIController::IsInsideCone(APawn const* pawn, FVector const Point) const
+{
+    FVector const toTarget = Point - pawn->GetActorLocation();
+    FVector const pawnForward = pawn->GetActorForwardVector();
+
+    return std::abs(std::acos(FVector::DotProduct(pawnForward.GetSafeNormal(), toTarget.GetSafeNormal()))) < FMath::DegreesToRadians(viewAngle) && toTarget.
+        Size() < viewDistance;
+}
