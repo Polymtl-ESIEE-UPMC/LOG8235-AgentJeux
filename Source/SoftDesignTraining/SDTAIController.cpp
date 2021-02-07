@@ -10,17 +10,18 @@
 void ASDTAIController::Tick(float deltaTime)
 {
     APawn* const pawn = GetPawn();
-    UWorld* const World = GetWorld();
+    UWorld* const world = GetWorld();
 
     FVector viewDirection = pawn->GetActorRotation().Vector();
 
-    TArray<FHitResult> HitResults = CollectActorsInFOV(pawn, World);
+    TArray<FHitResult> HitResults = CollectActorsInFOV(pawn, world);
 
-    bool deathZoneAhead = DetectDeathZone(pawn, World, viewDirection);
+    bool deathZoneAhead = DetectDeathZone(pawn, world, viewDirection);
 
-    APawn* playerPawn = World->GetFirstPlayerController()->GetPawn();
+    APawn* playerPawn = world->GetFirstPlayerController()->GetPawn();
     float angle = 0;
 
+    Navigate(pawn, world, deltaTime);
 
     if (deathZoneAhead)
     {
@@ -29,7 +30,7 @@ void ASDTAIController::Tick(float deltaTime)
     else if (playerPawn && isPlayerVisible(pawn, playerPawn->GetActorLocation(), viewDirection))
     {
         //check if powered_up
-        ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(World->GetFirstPlayerController()->GetCharacter());
+        ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(world->GetFirstPlayerController()->GetCharacter());
         if (mainCharacter->IsPoweredUp())
         {
             // main character is powerd-up, run
@@ -41,6 +42,7 @@ void ASDTAIController::Tick(float deltaTime)
     }
     else
     {
+        /*
         float minDist = -1;
         FHitResult ClosestHit;
 
@@ -85,11 +87,9 @@ void ASDTAIController::Tick(float deltaTime)
         DrawDebugDirectionalArrow(World, ClosestHit.ImpactPoint,
                                   ClosestHit.ImpactPoint + FVector(0, 0, 200.0f), 20,
                                   FColor::Green,
-                                  false, 1.0f, 0, 50);
+                                  false, 1.0f, 0, 50);*/
 
     }
-
-    AddAiMovement(pawn, viewDirection, angle);
 }
 
 bool ASDTAIController::isPlayerVisible(APawn* pawn, FVector playerPosition, FVector viewDirection)
@@ -119,43 +119,39 @@ bool ASDTAIController::isPlayerVisible(APawn* pawn, FVector playerPosition, FVec
     return false;
 }
 
-TArray<FHitResult> ASDTAIController::CollectVisibleWalls(APawn* pawn, UWorld* World)
+bool ASDTAIController::isGonnaHitWall(APawn const* pawn, UWorld const* world, FCollisionObjectQueryParams objectQueryParamsWall, FHitResult wallHit, FCollisionQueryParams queryParams, int side)
 {
-    // position initiale de l'agent
-    FVector Start = pawn->GetActorLocation();
-    FVector viewDirection = pawn->GetActorRotation().Vector();
-
-    // Identification des paramètres pour les trois lancer de rayons
-    FVector EndLeft = Start + viewDistance * viewDirection.RotateAngleAxis(-viewAngle / 2.0f, FVector(0, 0, 1));
-    FVector EndMiddle = Start + viewDistance * viewDirection;
-    FVector EndRight = Start + viewDistance * viewDirection.RotateAngleAxis(viewAngle / 2.0f, FVector(0, 0, 1));
-
-    FHitResult HitResultLeft, HitResultMiddle, HitResultRight;
-
-    FCollisionObjectQueryParams ObjectQueryParams = FCollisionObjectQueryParams(ECC_WorldStatic);
-    FCollisionQueryParams QueryParams = FCollisionQueryParams::DefaultQueryParam;
-
-    TArray<FHitResult> HitResults;
-
-    World->LineTraceSingleByObjectType(HitResultLeft, Start, EndLeft, ObjectQueryParams, QueryParams);
-
-    World->LineTraceSingleByObjectType(HitResultMiddle, Start, EndMiddle, ObjectQueryParams, QueryParams);
-
-    World->LineTraceSingleByObjectType(HitResultRight, Start, EndRight, ObjectQueryParams, QueryParams);
-
-
-    //ajout de ligne de debug dans le jeu pour visualiser les lancer de rayons
-    DrawDebugLine(World, Start, EndLeft, FColor::Orange, false, 0.1f);
-    DrawDebugLine(World, Start, EndMiddle, FColor::Orange, false, 0.1f);
-    DrawDebugLine(World, Start, EndRight, FColor::Orange, false, 0.1f);
-
-
-    HitResults.Add(HitResultLeft);
-    HitResults.Add(HitResultMiddle);
-    HitResults.Add(HitResultRight);
-
-
-    return HitResults;
+    switch (side) {
+        case RIGHT_SIDE: 
+        {
+            FVector wallDetectionRight;
+            wallDetectionRight = pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorRightVector();
+            return world->LineTraceSingleByObjectType(wallHit, pawn->GetActorLocation(), wallDetectionRight, objectQueryParamsWall, queryParams);
+        }
+        break;
+        case LEFT_SIDE: 
+        {
+            FVector wallDetectionLeft;
+            wallDetectionLeft = pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorRightVector() * -1.0f;
+            return world->LineTraceSingleByObjectType(wallHit, pawn->GetActorLocation(), wallDetectionLeft, objectQueryParamsWall, queryParams);
+        }
+        break;
+        case FRONTSIDE: 
+        {
+            FVector wallDetectionForward;
+            wallDetectionForward = pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector();
+            return world->LineTraceSingleByObjectType(wallHit, pawn->GetActorLocation(), wallDetectionForward, objectQueryParamsWall, queryParams);
+        }
+        break;
+        case BACKSIDE: 
+        {
+            FVector wallDetectionBack;
+            wallDetectionBack = pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector() * -1.0f;
+            return world->LineTraceSingleByObjectType(wallHit, pawn->GetActorLocation(), wallDetectionBack, objectQueryParamsWall, queryParams);
+        }
+        break;
+    }
+    return false;
 }
 
 bool ASDTAIController::DetectDeathZone(APawn* pawn, UWorld* World, FVector viewDirection)
@@ -178,17 +174,29 @@ bool ASDTAIController::DetectDeathZone(APawn* pawn, UWorld* World, FVector viewD
 }
 
 // Add a movement input to the pawn and set the rotation to be in the same direction
-void ASDTAIController::AddAiMovement(APawn* pawn, FVector movementDirection, float rotateAngle)
+void ASDTAIController::AddAIMovement(APawn* pawn, FVector movementDirection)
 {
     // Adding movement 
     movementDirection.Normalize();
     pawn->AddMovementInput(movementDirection, movementSpeed);
-
-    // update current rotation
-    FRotator deltaRotation = FRotator(0, rotateAngle, 0);
-    pawn->AddActorWorldRotation(deltaRotation);
 }
 
+void ASDTAIController::AIChangingSpeed(float acceleration, float deltaTime)
+{
+    movementSpeed = FMath::Clamp((movementSpeed + acceleration * deltaTime), 0.1f, 1.f);
+}
+
+void ASDTAIController::Rotate(APawn* pawn, FVector direction) 
+{
+    FVector forwardVector = pawn->GetActorForwardVector();
+    direction.Normalize();
+    FVector newRotation = (direction - forwardVector);
+    newRotation.Normalize();
+    pawn->SetActorRotation(FMath::Lerp(forwardVector.ToOrientationRotator(), newRotation.ToOrientationRotator(), 0.05f));
+    
+    if (forwardVector.Equals(direction, 0.6f))
+        m_isRotating = false;
+}
 
 TArray<FHitResult> ASDTAIController::CollectActorsInFOV(APawn const* pawn, UWorld const* World) const
 {
@@ -238,4 +246,48 @@ bool ASDTAIController::IsInsideCone(APawn const* pawn, FVector const Point) cons
 
     return std::abs(std::acos(FVector::DotProduct(pawnForward.GetSafeNormal(), toTarget.GetSafeNormal()))) < FMath::DegreesToRadians(viewAngle) && toTarget.
         Size() < viewDistance;
+}
+
+void ASDTAIController::Navigate(APawn* pawn, UWorld* world, float deltaTime) {
+
+    FCollisionObjectQueryParams objectQueryParamsWall;
+    objectQueryParamsWall.AddObjectTypesToQuery(ECollisionChannel::ECC_WorldStatic);
+    FHitResult wallhit;
+    FCollisionQueryParams queryParams = FCollisionQueryParams();
+    queryParams.AddIgnoredActor(pawn);
+
+    if (!m_isRotating) {
+        // Verify if the AI will hit a wall or a death trap if it move forward 
+        if (!isGonnaHitWall(pawn, world, objectQueryParamsWall, wallhit, queryParams, FRONTSIDE) && !DetectDeathZone(pawn, world, pawn->GetActorRotation().Vector())) {
+            AIChangingSpeed(accelerationSpeed, deltaTime);
+            AddAIMovement(pawn, pawn->GetActorRotation().Vector());
+        }
+        // Verify if the AI will hit a wall if it move to the right  
+        else if (!isGonnaHitWall(pawn, world, objectQueryParamsWall, wallhit, queryParams, RIGHT_SIDE)) {
+            m_newRotatingDirection = FVector(1.f, 1.f, 0.f);
+            m_isRotating = true;
+            AIChangingSpeed(accelerationSpeed * decelerationSpeed, deltaTime);
+            // Rotate to the right 
+            Rotate(pawn, m_newRotatingDirection);
+        }
+        // Verify if the AI will hit a wall if it move to the Left 
+        else if (!isGonnaHitWall(pawn, world, objectQueryParamsWall, wallhit, queryParams, LEFT_SIDE)) {
+            m_newRotatingDirection = FVector(-1.f, -1.f, 0.f);
+            m_isRotating = true;
+            AIChangingSpeed(accelerationSpeed * decelerationSpeed, deltaTime);
+            // Rotate to the Left 
+            Rotate(pawn, m_newRotatingDirection);
+        }
+        // Verify if the AI will hit a wall if it move backward 
+        else if (!isGonnaHitWall(pawn, world, objectQueryParamsWall, wallhit, queryParams, BACKSIDE)) {
+            m_newRotatingDirection = -1.f * pawn->GetActorForwardVector();
+            m_isRotating = true;
+            AIChangingSpeed(accelerationSpeed * decelerationSpeed, deltaTime);
+            // Rotate to move backward 
+            Rotate(pawn, m_newRotatingDirection);
+        }
+    }
+    else {
+        Rotate(pawn, m_newRotatingDirection);
+    }
 }
