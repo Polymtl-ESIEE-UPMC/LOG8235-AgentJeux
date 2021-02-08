@@ -26,7 +26,7 @@ public:
     void Navigate(APawn* pawn, UWorld* world, float deltaTime);
     void AddAIMovement(APawn* pawn, FVector directionVector);
     void AIChangingSpeed(float acceleration, float deltaTime);
-    void Rotate(APawn* pawn, FVector direction);
+    void Rotate(APawn* pawn, FVector movementDirection);
 
     bool isPlayerVisible(APawn* pawn, FVector playerPosition, FVector viewDirection);
     bool DetectDeathZone(APawn* pawn, UWorld* World, FVector viewDirection);
@@ -55,7 +55,7 @@ public:
     The agent is slowing down when it will turn right or left
     0 : The agent speed doesn't change */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "1.0"))
-    float decelerationSpeed = -5.0f;
+    float decelerationSpeed = -7.0f;
 
     /* View distance of the agent.
     If the player is further than the view distance, the player will not be detected.
