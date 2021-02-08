@@ -30,6 +30,7 @@ public:
 
     bool isPlayerVisible(APawn* pawn, FVector playerPosition, FVector viewDirection);
     bool DetectDeathZone(APawn* pawn, UWorld* World, FVector viewDirection);
+    FVector GetCollectibleDirection();
     bool isGonnaHitWall(APawn const* pawn, UWorld const* world, FCollisionObjectQueryParams objectQueryParamsWall, FHitResult wallHit, FCollisionQueryParams queryParams, int side);
 
     TArray<FHitResult> CollectActorsInFOV(APawn const* pawn, UWorld const* World) const;

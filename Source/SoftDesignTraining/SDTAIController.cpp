@@ -39,8 +39,20 @@ void ASDTAIController::Tick(float deltaTime)
         }
     }
     // Detect PickUp
-    else if (0)
+    else if (GetCollectibleDirection() != FVector(0, 0, 0))
     {
+        UE_LOG(LogTemp, Warning, TEXT("In the elseif"))
+        FVector newDirection = GetCollectibleDirection().GetSafeNormal() * 0.1f + GetPawn()->GetActorForwardVector().GetSafeNormal() * 0.9f;
+        pawn->SetActorRotation(FMath::Lerp(pawn->GetActorRotation(), newDirection.Rotation(), 0.05f));
+       /* AddAIMovement(pawn, GetCollectibleDirection().GetSafeNormal() * 0.1f + GetPawn()->GetActorForwardVector().GetSafeNormal() * 0.9f);*/
+
+
+
+
+
+
+
+
         /*
         float minDist = -1;
         FHitResult ClosestHit;
@@ -139,6 +151,45 @@ bool ASDTAIController::DetectDeathZone(APawn* pawn, UWorld* World, FVector viewD
     if (HitResult.GetComponent())
         return HitResult.GetComponent()->GetCollisionObjectType() == ECC_GameTraceChannel3;
     return false;
+}
+
+FVector ASDTAIController::GetCollectibleDirection()
+{
+    APawn* const pawn = GetPawn();
+    UWorld* const world = GetWorld();
+    TArray<FHitResult> OutHits;
+    FHitResult outHit;
+
+    FCollisionShape CollisionBox;
+    CollisionBox = FCollisionShape::MakeBox(FVector(600, 600, 50));
+
+    FVector SweepStart = pawn->GetActorLocation();
+    FVector SweepEnd = pawn->GetActorLocation() + pawn->GetActorForwardVector() * 300.0f;
+    SweepEnd.Z += 0.001f;
+
+    //Debug
+    DrawDebugBox(world, SweepEnd, CollisionBox.GetExtent(), FColor::Green, false, 0.1f, 0, 5.0f);
+
+    bool isCollectibleHit = GetWorld()->SweepMultiByObjectType(OutHits, SweepStart, SweepEnd, FQuat::Identity, COLLISION_COLLECTIBLE, CollisionBox);
+
+    if (isCollectibleHit)
+    {
+        for (auto& Hit : OutHits)
+        {
+            FVector const toTarget = FVector(FVector2D(Hit.Actor->GetActorLocation() - pawn->GetActorLocation()), 0.0f);
+            bool canSee = !world->LineTraceSingleByObjectType(outHit, pawn->GetActorLocation(), Hit.Actor->GetActorLocation(), ECC_WorldStatic) &&
+                (std::acos(FVector::DotProduct(pawn->GetActorForwardVector().GetSafeNormal(), toTarget.GetSafeNormal()))) < PI / 3.0f;
+            ASDTCollectible* collectible = dynamic_cast<ASDTCollectible*>(Hit.GetActor());
+
+            if (canSee && collectible->GetStaticMeshComponent()->IsVisible())
+            {
+                return toTarget;
+            }
+
+        }
+    }
+    return FVector(0, 0, 0); // Valeur retournée dans le cas où aucune balle n'est détectée
+
 }
 
 // Add a movement input to the pawn and set the rotation to be in the same direction
