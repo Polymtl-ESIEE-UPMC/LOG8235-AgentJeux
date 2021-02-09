@@ -67,14 +67,19 @@ private:
     void RotateAI(FVector direction);
     void RotateAI(FRotator rotator);
     bool IsDeathZoneAhead();
-    bool isPlayerVisible();
+    bool IsPlayerVisible();
 
     FVector GetCollectibleDirection();
     TArray<FHitResult> CollectActorsInFOV();
     TArray<FHitResult> CollectTargetActorsInFrontOfCharacter();
     bool IsInsideCone(FVector const Point);
 
-    bool isGonnaHitWall();
+    bool IsGonnaHitWall();
+
+    void NavigateAvoidDeathZone(float deltaTime);
+    void NavigateToPlayer(float deltaTime);
+    void NavigateToCollectible(float deltaTime);
+    void NavigateAvoidWall(float deltaTime);
     //void Navigate(APawn* pawn, UWorld* world, float deltaTime);
 
     bool m_isRotating = false;
