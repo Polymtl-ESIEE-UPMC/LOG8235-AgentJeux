@@ -41,17 +41,8 @@ void ASDTAIController::Tick(float deltaTime)
     // Detect PickUp
     else if (GetCollectibleDirection() != FVector(0, 0, 0))
     {
-        UE_LOG(LogTemp, Warning, TEXT("In the elseif"))
-        FVector newDirection = GetCollectibleDirection().GetSafeNormal() * 0.1f + GetPawn()->GetActorForwardVector().GetSafeNormal() * 0.9f;
-        pawn->SetActorRotation(FMath::Lerp(pawn->GetActorRotation(), newDirection.Rotation(), 0.05f));
-       /* AddAIMovement(pawn, GetCollectibleDirection().GetSafeNormal() * 0.1f + GetPawn()->GetActorForwardVector().GetSafeNormal() * 0.9f);*/
 
-
-
-
-
-
-
+        ChangeAIMovement(GetCollectibleDirection().GetSafeNormal() * 0.2f + GetPawn()->GetActorForwardVector().GetSafeNormal() * 0.8f);
 
         /*
         float minDist = -1;
@@ -65,6 +56,7 @@ void ASDTAIController::Tick(float deltaTime)
             {
                 minDist = dist;
                 ClosestHit = HitResult;
+            }
             }
             
             DrawDebugDirectionalArrow(World, HitResult.ImpactPoint,
@@ -157,32 +149,34 @@ FVector ASDTAIController::GetCollectibleDirection()
 {
     APawn* const pawn = GetPawn();
     UWorld* const world = GetWorld();
+    TArray<FHitResult> HitResults = CollectActorsInFOV(pawn, world);
+
     TArray<FHitResult> OutHits;
     FHitResult outHit;
 
-    FCollisionShape CollisionBox;
-    CollisionBox = FCollisionShape::MakeBox(FVector(600, 600, 50));
+    FCollisionShape HitBox;
+    HitBox = FCollisionShape::MakeBox(FVector(viewDistance, viewDistance, 50));
 
     FVector SweepStart = pawn->GetActorLocation();
-    FVector SweepEnd = pawn->GetActorLocation() + pawn->GetActorForwardVector() * 300.0f;
-    SweepEnd.Z += 0.001f;
+    FVector SweepEnd = pawn->GetActorLocation() + pawn->GetActorForwardVector() * viewDistance;
 
     //Debug
-    DrawDebugBox(world, SweepEnd, CollisionBox.GetExtent(), FColor::Green, false, 0.1f, 0, 5.0f);
-
-    bool isCollectibleHit = GetWorld()->SweepMultiByObjectType(OutHits, SweepStart, SweepEnd, FQuat::Identity, COLLISION_COLLECTIBLE, CollisionBox);
+    DrawDebugBox(world, SweepEnd, HitBox.GetExtent(), FColor::Green, false, 0.1f, 0, 5.0f);
+    bool isCollectibleHit = GetWorld()->SweepMultiByObjectType(OutHits, SweepStart, SweepEnd, FQuat::Identity, COLLISION_COLLECTIBLE, HitBox);
 
     if (isCollectibleHit)
     {
         for (auto& Hit : OutHits)
         {
             FVector const toTarget = FVector(FVector2D(Hit.Actor->GetActorLocation() - pawn->GetActorLocation()), 0.0f);
+
             bool canSee = !world->LineTraceSingleByObjectType(outHit, pawn->GetActorLocation(), Hit.Actor->GetActorLocation(), ECC_WorldStatic) &&
                 (std::acos(FVector::DotProduct(pawn->GetActorForwardVector().GetSafeNormal(), toTarget.GetSafeNormal()))) < PI / 3.0f;
             ASDTCollectible* collectible = dynamic_cast<ASDTCollectible*>(Hit.GetActor());
 
             if (canSee && collectible->GetStaticMeshComponent()->IsVisible())
             {
+                UE_LOG(LogTemp, Warning, TEXT("The vector value is: %s"), *toTarget.ToString());
                 return toTarget;
             }
 
@@ -198,6 +192,11 @@ void ASDTAIController::AddAIMovement(APawn* pawn, FVector movementDirection)
     // Adding movement 
     movementDirection.Normalize();
     pawn->AddMovementInput(movementDirection, movementSpeed);
+}
+
+void ASDTAIController::ChangeAIMovement(FVector direction)
+{
+    GetPawn()->SetActorRotation(direction.ToOrientationQuat());
 }
 
 // Add some velocity to the agent if they keep going forward 

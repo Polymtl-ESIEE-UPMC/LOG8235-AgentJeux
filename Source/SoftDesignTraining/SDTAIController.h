@@ -24,12 +24,14 @@ public:
     virtual void Tick(float deltaTime) override;
 
     void Navigate(APawn* pawn, UWorld* world, float deltaTime);
-    void AddAIMovement(APawn* pawn, FVector directionVector);
+    void AddAIMovement(APawn* pawn, FVector movementDirection);
     void AIChangingSpeed(float acceleration, float deltaTime);
     void Rotate(APawn* pawn, FVector movementDirection);
+    void ChangeAIMovement(FVector direction);
 
     bool isPlayerVisible(APawn* pawn, FVector playerPosition, FVector viewDirection);
     bool DetectDeathZone(APawn* pawn, UWorld* World, FVector viewDirection);
+    bool DetectCollectable(APawn* pawn, UWorld* World, FVector viewDirection);
     FVector GetCollectibleDirection();
     bool isGonnaHitWall(APawn const* pawn, UWorld const* world, FCollisionObjectQueryParams objectQueryParamsWall, FHitResult wallHit, FCollisionQueryParams queryParams, int side);
 
