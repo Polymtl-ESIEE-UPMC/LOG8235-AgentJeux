@@ -23,24 +23,6 @@ class SOFTDESIGNTRAINING_API ASDTAIController : public AAIController
 public:
     virtual void Tick(float deltaTime) override;
 
-    void Navigate(APawn* pawn, UWorld* world, float deltaTime);
-    void AddAIMovement(APawn* pawn, FVector movementDirection);
-    void AIChangingSpeed(float acceleration, float deltaTime);
-    void Rotate(APawn* pawn, FVector movementDirection);
-    void ChangeAIMovement(FVector direction);
-
-    bool isPlayerVisible(APawn* pawn, FVector playerPosition, FVector viewDirection);
-    bool DetectDeathZone(APawn* pawn, UWorld* World, FVector viewDirection);
-    bool DetectCollectable(APawn* pawn, UWorld* World, FVector viewDirection);
-    FVector GetCollectibleDirection();
-    bool isGonnaHitWall(APawn const* pawn, UWorld const* world, FCollisionObjectQueryParams objectQueryParamsWall, FHitResult wallHit, FCollisionQueryParams queryParams, int side);
-
-    TArray<FHitResult> CollectActorsInFOV(APawn const* pawn, UWorld const* World) const;
-    
-    TArray<FHitResult> CollectTargetActorsInFrontOfCharacter(APawn const* pawn, UWorld const* World) const;
-    
-    bool IsInsideCone(APawn const * pawn, FVector const Point) const;
-
     /**Movement speed of the agent. 
     Needs to be a value between 0 and 1. 
     0 : The agent doesn't move. 
@@ -80,6 +62,20 @@ public:
     float wallDetectionDistance = 200.0f;
 
 private:
+    void MoveAI(FVector movementDirection);
+    void ChangeAISpeed(float acceleration, float deltaTime);
+    void RotateAI(FVector direction);
+    void RotateAI(FRotator rotator);
+    bool IsDeathZoneAhead();
+    bool isPlayerVisible();
+
+    FVector GetCollectibleDirection();
+    TArray<FHitResult> CollectActorsInFOV();
+    TArray<FHitResult> CollectTargetActorsInFrontOfCharacter();
+    bool IsInsideCone(FVector const Point);
+
+    bool isGonnaHitWall();
+    //void Navigate(APawn* pawn, UWorld* world, float deltaTime);
 
     bool m_isRotating = false;
     FVector m_newRotatingDirection = FVector(0.f, 0.f, 0.f);
