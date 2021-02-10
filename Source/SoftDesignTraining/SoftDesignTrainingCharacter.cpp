@@ -47,7 +47,9 @@ void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* Overlappe
     }
     else if (ASoftDesignTrainingMainCharacter* mainCharacter = Cast<ASoftDesignTrainingMainCharacter>(OtherActor))
     {
-        if(mainCharacter->IsPoweredUp())
+        if (mainCharacter->IsPoweredUp()) {
             SetActorLocation(m_StartingPosition);
+            Cast<ASDTAIController>(controller)->IncrementAIDeathCount();
+        }
     }
 }
