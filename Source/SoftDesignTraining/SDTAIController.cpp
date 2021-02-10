@@ -18,7 +18,7 @@ void ASDTAIController::Tick(float deltaTime)
     }
     else if (world->GetFirstPlayerController()->GetPawn() && IsPlayerVisible())
     {
-        NavigateToPlayer(deltaTime);
+        NavigateToPlayer(pawn, deltaTime);
     }
     // Detect PickUp
     else if (GetCollectibleDirection() != FVector(0, 0, 0))
@@ -270,12 +270,17 @@ bool ASDTAIController::IsGonnaHitWall(APawn* pawn, UWorld* world, FVector start,
     return world->LineTraceSingleByObjectType(hitResult, start, end, objectQueryParamsWall, queryParams);
 }
 
-void ASDTAIController::NavigateToPlayer(float deltaTime) {
+void ASDTAIController::NavigateToPlayer(APawn* pawn, float deltaTime) {
     //check if powered_up
     ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(GetWorld()->GetFirstPlayerController()->GetCharacter());
     if (mainCharacter->IsPoweredUp())
     {
         // main character is powerd-up, run
+        FVector newPawnDirection;
+        newPawnDirection = FVector(FVector::CrossProduct(FVector::UpVector, pawn->GetActorRightVector()));
+        newPawnDirection.Normalize();
+        pawn->SetActorRotation(newPawnDirection.Rotation());
+        ChangeAISpeed(decelerationSpeed, deltaTime);
     }
     else
     {

@@ -81,7 +81,7 @@ private:
 
     bool IsGonnaHitWall(APawn* pawn, UWorld* world, FVector start, FVector end);
 
-    void NavigateToPlayer(float deltaTime);
+    void NavigateToPlayer(APawn* pawn, float deltaTime);
     void NavigateToCollectible(float deltaTime);
     void Navigation(APawn* pawn, UWorld* world, bool deathTrap, float deltaTime);
 
