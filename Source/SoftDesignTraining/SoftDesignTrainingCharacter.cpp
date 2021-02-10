@@ -6,6 +6,7 @@
 #include "SDTUtils.h"
 #include "DrawDebugHelpers.h"
 #include "SDTCollectible.h"
+#include "SDTAIController.h"
 
 
 ASoftDesignTrainingCharacter::ASoftDesignTrainingCharacter()
@@ -23,15 +24,23 @@ void ASoftDesignTrainingCharacter::BeginPlay()
 
 void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+    AController* controller = GetController();
+
     if (OtherComponent->GetCollisionObjectType() == COLLISION_DEATH_OBJECT)
     {
         SetActorLocation(m_StartingPosition);
+
+        if (controller->IsA(ASDTAIController::StaticClass()))
+            Cast<ASDTAIController>(controller)->IncrementAIDeathCount();
     }
     else if(ASDTCollectible* collectibleActor = Cast<ASDTCollectible>(OtherActor))
     {
         if (!collectibleActor->IsOnCooldown())
         {
             OnCollectPowerUp();
+
+            if (controller->IsA(ASDTAIController::StaticClass()))
+                Cast<ASDTAIController>(controller)->IncrementAICollectibleCount();
         }
 
         collectibleActor->Collect();

@@ -22,6 +22,8 @@ class SOFTDESIGNTRAINING_API ASDTAIController : public AAIController
     GENERATED_BODY()
 public:
     virtual void Tick(float deltaTime) override;
+    void IncrementAIDeathCount();
+    void IncrementAICollectibleCount();
 
     /**Movement speed of the agent. 
     Needs to be a value between 0 and 1. 
@@ -33,13 +35,13 @@ public:
     /**Acceleration speed of the agent.
     The agent is going faster if it still going in the same direction
     0 : The agent speed is const*/
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "10.0"))
     float accelerationSpeed = 1.0f;
 
     /**deceleration speed of the agent when they turn right or left.
     The agent is slowing down when it will turn right or left
     0 : The agent speed doesn't change */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "10.0"))
     float decelerationSpeed = -7.0f;
 
     /* View distance of the agent.
@@ -58,8 +60,12 @@ public:
     /* Minimal distance for wall detection 
     If the wall is further than 175 unit, the agent won't detect it, if the wall is inside 175 unit, the agent will detect it and move accordingly
     Need to be greater than 0*/
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "180.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "275.0"))
     float wallDetectionDistance = 175.0f;
+
+    // Determine the test's lenght in sec
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "180.0"))
+        float m_testPeriod = 60;
 
 private:
     void MoveAI(FVector movementDirection);
@@ -78,6 +84,13 @@ private:
     void NavigateToPlayer(float deltaTime);
     void NavigateToCollectible(float deltaTime);
     void Navigation(APawn* pawn, UWorld* world, bool deathTrap, float deltaTime);
+
+    void DisplayTestInformation(float delatTime);
+
+    // Information about the AI automatic test
+    int m_numberPickUp = 0;
+    int m_numberAIDeath = 0;
+    float m_timer = 0.f;
 
     bool m_isRotating = false;
     FVector m_newRotatingDirection = FVector(0.f, 0.f, 0.f);

@@ -167,7 +167,7 @@ FVector ASDTAIController::GetCollectibleDirection()
 
         }
     }
-    return FVector(0, 0, 0); // Valeur retournée dans le cas où aucune balle n'est détectée
+    return FVector(0, 0, 0); // Valeur retournï¿½e dans le cas oï¿½ aucune balle n'est dï¿½tectï¿½e
 
 }
 
@@ -336,5 +336,34 @@ void ASDTAIController::Navigation(APawn* pawn, UWorld* world, bool deathTrapAhea
             pawn->SetActorRotation(FMath::Lerp(pawn->GetActorRotation(), newPawnDirection.Rotation(), 0.05f));
         ChangeAISpeed(decelerationSpeed, deltaTime);
     }
+}
+
+void ASDTAIController::IncrementAIDeathCount() {
+	m_numberAIDeath++;
+}
+
+void ASDTAIController::IncrementAICollectibleCount() {
+	m_numberPickUp++;
+}
+
+void ASDTAIController::DisplayTestInformation(float delatTime) {
+
+	//Show stats and verify if GEngine is not 0
+	if (GEngine) {
+		GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Green, FString::Printf(TEXT("------------------------------"), *(GetPawn()->GetName())));
+		GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Red, FString::Printf(TEXT("Total of AI's Death: %s"), *FString::FromInt(m_numberAIDeath)));
+		GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Red, FString::Printf(TEXT("Total of AI's pickup: %s"), *FString::FromInt(m_numberPickUp)));
+		GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Red, FString::Printf(TEXT("Timer: %s"), *FString::FromInt(m_timer)));
+		GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Green, FString::Printf(TEXT("------------- %s -------------"), *(GetPawn()->GetName())));
+
+		m_timer += delatTime;
+
+		//Reset stats if Period is over
+		if (m_timer >= m_testPeriod) {
+			m_numberAIDeath = 0;
+			m_numberPickUp = 0;
+			m_timer = 0;
+		}
+	}
 }
 
