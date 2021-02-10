@@ -83,7 +83,8 @@ bool ASDTAIController::IsDeathZoneAhead()
 
     for (auto& hit : hitResults) {
         world->LineTraceSingleByObjectType(isNearAI, pawn->GetActorLocation(), hit.GetActor()->GetActorLocation(), objectQueryParams, queryParams);
-        DrawDebugLine(GetWorld(), pawn->GetActorLocation(), hit.GetActor()->GetActorLocation(), FColor::Blue, false, 0.1f);
+        if(displayDebugLines)
+            DrawDebugLine(GetWorld(), pawn->GetActorLocation(), hit.GetActor()->GetActorLocation(), FColor::Blue, false, 0.1f);
         if (hit.GetComponent()->GetCollisionObjectType() == ECC_GameTraceChannel3 && isNearAI.GetComponent()->GetCollisionObjectType() == ECC_GameTraceChannel3)
             return true;
     }
@@ -120,7 +121,8 @@ bool ASDTAIController::IsPlayerVisible()
         QueryParams.AddIgnoredActor(GetPawn());
 
         GetWorld()->LineTraceSingleByObjectType(HitResult, Start, firstPlayerPosition, ObjectQueryParams, QueryParams);
-        DrawDebugLine(GetWorld(), Start, firstPlayerPosition, FColor::Orange, false, 0.1f);
+        if (displayDebugLines)
+            DrawDebugLine(GetWorld(), Start, firstPlayerPosition, FColor::Orange, false, 0.1f);
         return HitResult.GetComponent()->GetCollisionObjectType() == ECC_GameTraceChannel4;
     }
     return false;
@@ -146,8 +148,6 @@ FVector ASDTAIController::GetCollectibleDirection()
     FVector SweepStart = pawn->GetActorLocation();
     FVector SweepEnd = pawn->GetActorLocation() + pawn->GetActorForwardVector() * viewDistance;
 
-    //Debug
-    //DrawDebugBox(world, SweepEnd, HitBox.GetExtent(), FColor::Green, false, 0.1f, 0, 5.0f);
     bool isCollectibleHit = GetWorld()->SweepMultiByObjectType(OutHits, SweepStart, SweepEnd, FQuat::Identity, COLLISION_COLLECTIBLE, HitBox);
 
     if (isCollectibleHit)
@@ -183,16 +183,12 @@ TArray<FHitResult> ASDTAIController::CollectActorsInFOV()
     UWorld* const world = GetWorld();
     TArray<FHitResult> OverlapResults = CollectTargetActorsInFrontOfCharacter();
     
-    DrawDebugCone(world, pawn->GetActorLocation(), pawn->GetActorRotation().Vector(), viewDistance, FMath::DegreesToRadians(viewAngle),
+    if (displayDebugLines)
+        DrawDebugCone(world, pawn->GetActorLocation(), pawn->GetActorRotation().Vector(), viewDistance, FMath::DegreesToRadians(viewAngle),
                   FMath::DegreesToRadians(viewAngle), 24, FColor::Green);
     
     return OverlapResults.FilterByPredicate([world, pawn, this](FHitResult HitResult)
-    {
-        /*DrawDebugDirectionalArrow(world, HitResult.ImpactPoint,
-                                  HitResult.ImpactPoint + FVector(0, 0, 200.0f), 20,
-                                  FColor::Yellow,
-                                  false, 1.0f, 0, 10);*/
-        
+    {     
         return IsInsideCone(HitResult.ImpactPoint) && (HitResult.ImpactPoint - pawn->GetActorLocation()).Size();
     });
 }
@@ -221,9 +217,10 @@ TArray<FHitResult> ASDTAIController::CollectTargetActorsInFrontOfCharacter()
                                   FQuat::Identity, FCollisionObjectQueryParams::AllObjects,
                                   CollisionShape, QueryParams);
 
-
-    DrawDebugSphere(world, pawn->GetActorLocation(), radius, 12, FColor::Silver);
-    DrawDebugSphere(world, Pos, radius, 12, FColor::Silver);
+    if (displayDebugLines) {
+        DrawDebugSphere(world, pawn->GetActorLocation(), radius, 12, FColor::Silver);
+        DrawDebugSphere(world, Pos, radius, 12, FColor::Silver);
+    }
 
     return HitResults;
 }
@@ -316,13 +313,14 @@ void ASDTAIController::Navigation(APawn* pawn, UWorld* world, bool deathTrapAhea
     bool isHitRight = IsGonnaHitWall(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector().RotateAngleAxis(15, FVector(0, 0, 1)));
     bool isHitLeft = IsGonnaHitWall(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector().RotateAngleAxis(-15, FVector(0, 0, 1)));
 
-    //A enlever quand c'est finie ou mettre une option pour afficher les debugs line
-    DrawDebugLine(world, pawn->GetActorLocation(),
-        pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector(), FColor::Blue, false, 0.1f);
-    DrawDebugLine(world, pawn->GetActorLocation(),
-        pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector().RotateAngleAxis(15, FVector(0, 0, 1)), FColor::Blue, false, 0.1f);
-    DrawDebugLine(world, pawn->GetActorLocation(),
-        pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector().RotateAngleAxis(-15, FVector(0, 0, 1)), FColor::Blue, false, 0.1f);
+    if (displayDebugLines){
+        DrawDebugLine(world, pawn->GetActorLocation(),
+            pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector(), FColor::Blue, false, 0.1f);
+        DrawDebugLine(world, pawn->GetActorLocation(),
+            pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector().RotateAngleAxis(15, FVector(0, 0, 1)), FColor::Blue, false, 0.1f);
+        DrawDebugLine(world, pawn->GetActorLocation(),
+            pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector().RotateAngleAxis(-15, FVector(0, 0, 1)), FColor::Blue, false, 0.1f);
+    }
 
     if (isHitFront || isHitRight || isHitLeft || deathTrapAhead)
     {

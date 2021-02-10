@@ -57,15 +57,20 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "180.0"))
     float viewAngle = 40;
 
+    /*True: Display debug lines
+    False: no debug lines*/
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    bool displayDebugLines = false;
+
     /* Minimal distance for wall detection 
     If the wall is further than 175 unit, the agent won't detect it, if the wall is inside 175 unit, the agent will detect it and move accordingly
     Need to be greater than 0*/
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "275.0"))
-    float wallDetectionDistance = 175.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "500.0"))
+    float wallDetectionDistance = 255.0f;
 
     // Determine the test's lenght in sec
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "180.0"))
-        float m_testPeriod = 60;
+    float m_testPeriod = 60;
 
 private:
     void MoveAI(FVector movementDirection);
