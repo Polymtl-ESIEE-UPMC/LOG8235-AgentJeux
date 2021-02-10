@@ -59,13 +59,12 @@ public:
     If the wall is further than 175 unit, the agent won't detect it, if the wall is inside 175 unit, the agent will detect it and move accordingly
     Need to be greater than 0*/
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "180.0"))
-    float wallDetectionDistance = 200.0f;
+    float wallDetectionDistance = 175.0f;
 
 private:
     void MoveAI(FVector movementDirection);
     void ChangeAISpeed(float acceleration, float deltaTime);
     void RotateAI(FVector direction);
-    void RotateAI(FRotator rotator);
     bool IsDeathZoneAhead();
     bool IsPlayerVisible();
 
@@ -74,13 +73,11 @@ private:
     TArray<FHitResult> CollectTargetActorsInFrontOfCharacter();
     bool IsInsideCone(FVector const Point);
 
-    bool IsGonnaHitWall();
+    bool IsGonnaHitWall(APawn* pawn, UWorld* world, FVector start, FVector end);
 
-    void NavigateAvoidDeathZone(float deltaTime);
     void NavigateToPlayer(float deltaTime);
     void NavigateToCollectible(float deltaTime);
-    void NavigateAvoidWall(float deltaTime);
-    //void Navigate(APawn* pawn, UWorld* world, float deltaTime);
+    void Navigation(APawn* pawn, UWorld* world, bool deathTrap, float deltaTime);
 
     bool m_isRotating = false;
     FVector m_newRotatingDirection = FVector(0.f, 0.f, 0.f);
