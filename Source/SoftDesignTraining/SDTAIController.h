@@ -91,7 +91,4 @@ private:
     int m_numberPickUp = 0;
     int m_numberAIDeath = 0;
     float m_timer = 0.f;
-
-    bool m_isRotating = false;
-    FVector m_newRotatingDirection = FVector(0.f, 0.f, 0.f);
 };
