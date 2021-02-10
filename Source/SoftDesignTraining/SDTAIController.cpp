@@ -162,7 +162,6 @@ FVector ASDTAIController::GetCollectibleDirection()
 
             if (canSee && collectible->GetStaticMeshComponent()->IsVisible())
             {
-                //UE_LOG(LogTemp, Warning, TEXT("The vector value is: %s"), *toTarget.ToString());
                 return toTarget;
             }
 
@@ -270,6 +269,11 @@ bool ASDTAIController::IsGonnaHitWall(APawn* pawn, UWorld* world, FVector start,
     return world->LineTraceSingleByObjectType(hitResult, start, end, objectQueryParamsWall, queryParams);
 }
 
+/// <summary>
+/// Behavior when player is detected. If powered up, flee and otherwise attack
+/// </summary>
+/// <param name="pawn"></param>
+/// <param name="deltaTime"></param>
 void ASDTAIController::NavigateToPlayer(APawn* pawn, float deltaTime) {
     //check if powered_up
     ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(GetWorld()->GetFirstPlayerController()->GetCharacter());
@@ -285,6 +289,12 @@ void ASDTAIController::NavigateToPlayer(APawn* pawn, float deltaTime) {
     else
     {
         // main character is not powered-up, attack
+        FVector newPawnDirection;
+        newPawnDirection = FVector(FVector2D(mainCharacter->GetActorLocation() - pawn->GetActorLocation()), 0.0f);
+        newPawnDirection.Normalize();
+        pawn->SetActorRotation(newPawnDirection.Rotation());
+        /*ChangeAISpeed(decelerationSpeed, deltaTime);*/
+
     }
 }
 
