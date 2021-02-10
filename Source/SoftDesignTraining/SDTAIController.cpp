@@ -31,6 +31,7 @@ void ASDTAIController::Tick(float deltaTime)
     FVector viewDirection = GetPawn()->GetActorRotation().Vector();
     ChangeAISpeed(accelerationSpeed, deltaTime);
     MoveAI(viewDirection);
+    DisplayTestInformation(deltaTime);
 }
 
 // Add a movement input to the pawn and set the rotation to be in the same direction
@@ -338,14 +339,25 @@ void ASDTAIController::Navigation(APawn* pawn, UWorld* world, bool deathTrapAhea
     }
 }
 
+
+/// <summary>
+/// Increment the AI'sDeath count
+/// </summary>
 void ASDTAIController::IncrementAIDeathCount() {
 	m_numberAIDeath++;
 }
 
+/// <summary>
+/// Increment the AI's Pick up count
+/// </summary>
 void ASDTAIController::IncrementAICollectibleCount() {
 	m_numberPickUp++;
 }
 
+/// <summary>
+/// Display information about the AI
+/// </summary>
+/// <param name="delatTime"> Time between two frames </param>
 void ASDTAIController::DisplayTestInformation(float delatTime) {
 
 	//Show stats and verify if GEngine is not 0
