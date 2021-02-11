@@ -78,6 +78,7 @@ private:
     void RotateAI(FVector direction);
     bool IsDeathZoneAhead();
     bool IsPlayerVisible();
+    bool isCollectibleVisible(FVector newDirection, FHitResult outHit, FHitResult Hit);
 
     FVector GetCollectibleDirection();
     TArray<FHitResult> CollectActorsInFOV();

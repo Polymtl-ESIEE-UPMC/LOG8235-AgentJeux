@@ -128,47 +128,67 @@ bool ASDTAIController::IsPlayerVisible()
     return false;
 }
 
+/// <summary>
+///     Checks if collectible is visible to the ageng
+/// </summary>
+/// <param name="newDirection"> The Direction towards the collectible </param>
+/// <param name="outHit"> First blocking Hit found </param>
+/// <param name="Hit"> Collectible being checked </param>
+/// <returns>
+///     Boolean to tell if the object is inside visible to the AI
+///     True : It's visible
+///     False: It's not visible 
+///</returns>
+bool ASDTAIController::isCollectibleVisible(FVector newDirection, FHitResult outHit, FHitResult Hit)
+{
+
+    APawn* const pawn = GetPawn();
+    UWorld* const world = GetWorld();
+
+    bool isCollectibleVisible = !world->LineTraceSingleByObjectType(outHit, pawn->GetActorLocation(), Hit.Actor->GetActorLocation(), ECC_WorldStatic) &&
+        (std::acos(FVector::DotProduct(pawn->GetActorForwardVector().GetSafeNormal(), newDirection.GetSafeNormal()))) < PI / 3.0f;
+
+    return isCollectibleVisible;
+
+}
 
 /// <summary>
-/// TODO
+///     Identifies collectible in front of agent and if visible, rotates agent towards collectible
 /// </summary>
-/// <returns></returns>
+/// <returns>
+///     a new direction vector if collectible found else a null vector
+///</returns>
 FVector ASDTAIController::GetCollectibleDirection()
 {
     APawn* const pawn = GetPawn();
     UWorld* const world = GetWorld();
-    TArray<FHitResult> HitResults = CollectActorsInFOV();
 
     TArray<FHitResult> OutHits;
     FHitResult outHit;
 
-    FCollisionShape HitBox;
-    HitBox = FCollisionShape::MakeBox(FVector(viewDistance, viewDistance, 50));
+    FCollisionShape DetectionBox;
+    DetectionBox = FCollisionShape::MakeBox(FVector(viewDistance, viewDistance, 50));
 
-    FVector SweepStart = pawn->GetActorLocation();
-    FVector SweepEnd = pawn->GetActorLocation() + pawn->GetActorForwardVector() * viewDistance;
+    FVector Start = pawn->GetActorLocation();
+    FVector End = pawn->GetActorLocation() + pawn->GetActorForwardVector() * viewDistance;
 
-    bool isCollectibleHit = GetWorld()->SweepMultiByObjectType(OutHits, SweepStart, SweepEnd, FQuat::Identity, COLLISION_COLLECTIBLE, HitBox);
+    bool isCollectibleFound = GetWorld()->SweepMultiByObjectType(OutHits, Start, End, FQuat::Identity, COLLISION_COLLECTIBLE, DetectionBox);
 
-    if (isCollectibleHit)
+    if (isCollectibleFound)
     {
         for (auto& Hit : OutHits)
         {
-            FVector const toTarget = FVector(FVector2D(Hit.Actor->GetActorLocation() - pawn->GetActorLocation()), 0.0f);
-
-            bool canSee = !world->LineTraceSingleByObjectType(outHit, pawn->GetActorLocation(), Hit.Actor->GetActorLocation(), ECC_WorldStatic) &&
-                (std::acos(FVector::DotProduct(pawn->GetActorForwardVector().GetSafeNormal(), toTarget.GetSafeNormal()))) < PI / 3.0f;
+            FVector const newDirection = FVector(FVector2D(Hit.Actor->GetActorLocation() - pawn->GetActorLocation()), 0.0f);
+            bool visible = isCollectibleVisible(newDirection, outHit, Hit);
             ASDTCollectible* collectible = dynamic_cast<ASDTCollectible*>(Hit.GetActor());
 
-            if (canSee && collectible->GetStaticMeshComponent()->IsVisible())
+            if (visible && collectible->GetStaticMeshComponent()->IsVisible())
             {
-                return toTarget;
+                return newDirection;
             }
-
         }
     }
     return FVector(0, 0, 0); // Valeur retourn�e dans le cas o� aucune balle n'est d�tect�e
-
 }
 
 /// <summary>
