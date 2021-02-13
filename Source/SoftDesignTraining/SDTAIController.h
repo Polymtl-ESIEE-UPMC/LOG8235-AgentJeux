@@ -44,6 +44,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI, meta = (ClampMin = "0.0", ClampMax = "10.0"))
     float decelerationSpeed = -7.0f;
 
+    // internal controlled speed
+    float acceleration = accelerationSpeed;
+
     /* View distance of the agent.
     If the player is further than the view distance, the player will not be detected.
     Needs to be greater than 0.*/
@@ -76,6 +79,7 @@ private:
     void MoveAI(FVector movementDirection);
     void ChangeAISpeed(float acceleration, float deltaTime);
     void RotateAI(FVector direction);
+    void RotateAI(FRotator rotator);
     bool IsDeathZoneAhead();
     bool IsPlayerVisible();
     bool isCollectibleVisible(FVector newDirection, FHitResult outHit, FHitResult Hit);
@@ -85,11 +89,11 @@ private:
     TArray<FHitResult> CollectTargetActorsInFrontOfCharacter();
     bool IsInsideCone(FVector const Point);
 
-    bool IsGonnaHitWall(APawn* pawn, UWorld* world, FVector start, FVector end);
+    bool IsGonnaHitWall(FVector end);
 
-    void NavigateToPlayer(APawn* pawn, float deltaTime);
-    void NavigateToCollectible(float deltaTime);
-    void Navigation(APawn* pawn, UWorld* world, bool deathTrap, float deltaTime);
+    void NavigateToPlayer();
+    void NavigateToCollectible();
+    void Navigate();
 
     void DisplayTestInformation(float delatTime);
 

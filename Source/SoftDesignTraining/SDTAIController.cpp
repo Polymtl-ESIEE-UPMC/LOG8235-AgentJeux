@@ -8,28 +8,22 @@
 #include "SDTUtils.h"
 
 void ASDTAIController::Tick(float deltaTime)
-{
-    APawn* pawn = GetPawn();
-    UWorld* world = GetWorld(); 
+{ 
 
-    if (IsDeathZoneAhead())
+    if (GetWorld()->GetFirstPlayerController()->GetPawn() && IsPlayerVisible())
     {
-        Navigation(pawn, world, true, deltaTime);
-    }
-    else if (world->GetFirstPlayerController()->GetPawn() && IsPlayerVisible())
-    {
-        NavigateToPlayer(pawn, deltaTime);
+        NavigateToPlayer();
     }
     // Detect PickUp
     else if (GetCollectibleDirection() != FVector(0, 0, 0))
     {
-        NavigateToCollectible(deltaTime);
+        NavigateToCollectible();
     }
     else {
-        Navigation(pawn, world, false, deltaTime);
+        Navigate();
     }
+    ChangeAISpeed(acceleration, deltaTime);
     FVector viewDirection = GetPawn()->GetActorRotation().Vector();
-    ChangeAISpeed(accelerationSpeed, deltaTime);
     MoveAI(viewDirection);
     DisplayTestInformation(deltaTime);
 }
@@ -61,6 +55,11 @@ void ASDTAIController::ChangeAISpeed(float acceleration, float deltaTime)
 void ASDTAIController::RotateAI(FVector direction)
 {
     GetPawn()->SetActorRotation(direction.ToOrientationQuat());
+}
+
+void ASDTAIController::RotateAI(FRotator rotator)
+{
+    GetPawn()->SetActorRotation(rotator);
 }
 
 /// <summary>
@@ -145,10 +144,8 @@ bool ASDTAIController::isCollectibleVisible(FVector newDirection, FHitResult out
     APawn* const pawn = GetPawn();
     UWorld* const world = GetWorld();
 
-    bool isCollectibleVisible = !world->LineTraceSingleByObjectType(outHit, pawn->GetActorLocation(), Hit.Actor->GetActorLocation(), ECC_WorldStatic) &&
+    return !world->LineTraceSingleByObjectType(outHit, pawn->GetActorLocation(), Hit.Actor->GetActorLocation(), ECC_WorldStatic) &&
         (std::acos(FVector::DotProduct(pawn->GetActorForwardVector().GetSafeNormal(), newDirection.GetSafeNormal()))) < PI / 3.0f;
-
-    return isCollectibleVisible;
 
 }
 
@@ -161,7 +158,6 @@ bool ASDTAIController::isCollectibleVisible(FVector newDirection, FHitResult out
 FVector ASDTAIController::GetCollectibleDirection()
 {
     APawn* const pawn = GetPawn();
-    UWorld* const world = GetWorld();
 
     TArray<FHitResult> OutHits;
     FHitResult outHit;
@@ -275,15 +271,15 @@ bool ASDTAIController::IsInsideCone(FVector const Point)
 ///     True : Hit a wall
 ///     False: Hit nothing 
 /// </returns>
-bool ASDTAIController::IsGonnaHitWall(APawn* pawn, UWorld* world, FVector start, FVector end) 
+bool ASDTAIController::IsGonnaHitWall(FVector end) 
 {
     FCollisionObjectQueryParams objectQueryParamsWall;
     objectQueryParamsWall.AddObjectTypesToQuery(ECC_WorldStatic);
     FHitResult hitResult;
     FCollisionQueryParams queryParams = FCollisionQueryParams();
-    queryParams.AddIgnoredActor(pawn);
+    queryParams.AddIgnoredActor(GetPawn());
 
-    return world->LineTraceSingleByObjectType(hitResult, start, end, objectQueryParamsWall, queryParams);
+    return GetWorld()->LineTraceSingleByObjectType(hitResult, GetPawn()->GetActorLocation(), end, objectQueryParamsWall, queryParams);
 }
 
 /// <summary>
@@ -291,31 +287,31 @@ bool ASDTAIController::IsGonnaHitWall(APawn* pawn, UWorld* world, FVector start,
 /// </summary>
 /// <param name="pawn"></param>
 /// <param name="deltaTime"></param>
-void ASDTAIController::NavigateToPlayer(APawn* pawn, float deltaTime) {
+void ASDTAIController::NavigateToPlayer() {
     //check if powered_up
     ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(GetWorld()->GetFirstPlayerController()->GetCharacter());
     if (mainCharacter->IsPoweredUp())
     {
         // main character is powerd-up, run
+        acceleration = decelerationSpeed;
         FVector newPawnDirection;
-        newPawnDirection = FVector(FVector::CrossProduct(FVector::UpVector, pawn->GetActorRightVector()));
+        newPawnDirection = FVector(FVector::CrossProduct(FVector::UpVector, GetPawn()->GetActorRightVector()));
         newPawnDirection.Normalize();
-        pawn->SetActorRotation(newPawnDirection.Rotation());
-        ChangeAISpeed(decelerationSpeed, deltaTime);
+        RotateAI(newPawnDirection.Rotation());
     }
     else
     {
         // main character is not powered-up, attack
+        acceleration = accelerationSpeed;
         FVector newPawnDirection;
-        newPawnDirection = FVector(FVector2D(mainCharacter->GetActorLocation() - pawn->GetActorLocation()), 0.0f);
+        newPawnDirection = FVector(FVector2D(mainCharacter->GetActorLocation() - GetPawn()->GetActorLocation()), 0.0f);
         newPawnDirection.Normalize();
-        pawn->SetActorRotation(newPawnDirection.Rotation());
-        /*ChangeAISpeed(decelerationSpeed, deltaTime);*/
-
+        RotateAI(newPawnDirection.Rotation());
     }
 }
 
-void ASDTAIController::NavigateToCollectible(float deltaTime) {
+void ASDTAIController::NavigateToCollectible() {
+    acceleration = accelerationSpeed;
     RotateAI(GetCollectibleDirection().GetSafeNormal() * 0.2f + GetPawn()->GetActorForwardVector().GetSafeNormal() * 0.8f);
 }
 
@@ -326,12 +322,10 @@ void ASDTAIController::NavigateToCollectible(float deltaTime) {
 /// <param name="world"> World </param>
 /// <param name="deathTrapAhead"> Boolean to know  if a death trap is ahead or not </param>
 /// <param name="deltaTime"> time between two frames </param>
-void ASDTAIController::Navigation(APawn* pawn, UWorld* world, bool deathTrapAhead, float deltaTime) {
+void ASDTAIController::Navigate() {
 
-    //Check if collision within a angle of 30 degrees 
-    bool isHitFront = IsGonnaHitWall(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector());
-    bool isHitRight = IsGonnaHitWall(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector().RotateAngleAxis(15, FVector(0, 0, 1)));
-    bool isHitLeft = IsGonnaHitWall(pawn, world, pawn->GetActorLocation(), pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector().RotateAngleAxis(-15, FVector(0, 0, 1)));
+    APawn* const pawn = GetPawn();
+    UWorld* const world = GetWorld();
 
     if (displayDebugLines){
         DrawDebugLine(world, pawn->GetActorLocation(),
@@ -342,11 +336,18 @@ void ASDTAIController::Navigation(APawn* pawn, UWorld* world, bool deathTrapAhea
             pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector().RotateAngleAxis(-15, FVector(0, 0, 1)), FColor::Blue, false, 0.1f);
     }
 
-    if (isHitFront || isHitRight || isHitLeft || deathTrapAhead)
+    //Check if collision within a angle of 30 degrees 
+    bool isHitFront = IsGonnaHitWall(pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector());
+    bool isHitRight = IsGonnaHitWall(pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector().RotateAngleAxis(15, FVector(0, 0, 1)));
+    bool isHitLeft = IsGonnaHitWall(pawn->GetActorLocation() + wallDetectionDistance * pawn->GetActorForwardVector().RotateAngleAxis(-15, FVector(0, 0, 1)));
+    bool isDeathZoneAhead = IsDeathZoneAhead();
+
+    if (isHitFront || isHitRight || isHitLeft || isDeathZoneAhead)
     {
+        acceleration = decelerationSpeed;
         FVector newPawnDirection;
         //Change direction if collide 
-        if (deathTrapAhead) {
+        if (isDeathZoneAhead) {
             newPawnDirection = FVector(FVector::CrossProduct(FVector::UpVector, pawn->GetActorRightVector()));
         }
         else if (isHitRight) {
@@ -364,11 +365,13 @@ void ASDTAIController::Navigation(APawn* pawn, UWorld* world, bool deathTrapAhea
             }
         }
         newPawnDirection.Normalize();
-        if(deathTrapAhead)
-            pawn->SetActorRotation(newPawnDirection.Rotation());
+        if(isDeathZoneAhead)
+            RotateAI(newPawnDirection.Rotation());
         else
-            pawn->SetActorRotation(FMath::Lerp(pawn->GetActorRotation(), newPawnDirection.Rotation(), 0.05f));
-        ChangeAISpeed(decelerationSpeed, deltaTime);
+            RotateAI(FMath::Lerp(pawn->GetActorRotation(), newPawnDirection.Rotation(), 0.05f));
+    }
+    else {
+        acceleration = accelerationSpeed;
     }
 }
 
