@@ -47,6 +47,7 @@ public:
 public:
     virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
     void AIStateInterrupted();
+    virtual void Tick(float DeltaSeconds);
 
 protected:
     void OnMoveToTarget();
@@ -54,7 +55,14 @@ protected:
     void UpdatePlayerInteraction(float deltaTime);
 
 private:
+    enum State { FleeingPlayer, ChasingPlayer, CollectingPowerUps};
+    State pawnState = CollectingPowerUps;
+    bool hasPath = false;
+    AActor* targetCollectible = nullptr;
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void ChooseBehavior(float deltaTime) override;
     virtual void ShowNavigationPath() override;
+    void setTargetCollectible();
+    void setPathToLocation(FVector location);
+    void setPathToBestEscapePoint();
 };
