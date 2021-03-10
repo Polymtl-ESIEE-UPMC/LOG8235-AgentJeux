@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "SDTBaseAIController.generated.h"
 #include "SDTPathFollowingComponent.h"
+#include "SDTBaseAIController.generated.h"
 
 /**
  * 
@@ -23,6 +23,7 @@ public:
 protected:
     virtual void RotationUpdate(float deltaTime) {};
     virtual void ImpulseToDirection(float deltaTime) {};
+    virtual void BeginPlay() override;
 
     bool m_ReachedTarget;
     USDTPathFollowingComponent* m_PathFollowingComponent;
