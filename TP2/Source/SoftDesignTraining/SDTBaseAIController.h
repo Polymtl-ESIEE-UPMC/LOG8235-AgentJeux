@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "SDTBaseAIController.generated.h"
+#include "SDTPathFollowingComponent.h"
 
 /**
  * 
@@ -24,6 +25,7 @@ protected:
     virtual void ImpulseToDirection(float deltaTime) {};
 
     bool m_ReachedTarget;
+    USDTPathFollowingComponent* m_PathFollowingComponent;
 private:
     virtual void GoToBestTarget(float deltaTime) {};
     virtual void ChooseBehavior(float deltaTime) {};

@@ -10,6 +10,7 @@ ASDTBaseAIController::ASDTBaseAIController(const FObjectInitializer& ObjectIniti
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bStartWithTickEnabled = true;
     m_ReachedTarget = true;
+    m_PathFollowingComponent = Cast<USDTPathFollowingComponent>(GetComponentByClass(USDTPathFollowingComponent::StaticClass()));
 }
 
 void ASDTBaseAIController::Tick(float deltaTime)

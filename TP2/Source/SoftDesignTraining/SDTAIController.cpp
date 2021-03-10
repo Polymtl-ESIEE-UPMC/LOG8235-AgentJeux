@@ -17,7 +17,7 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
 {
 }
 
-void ASDTAIController::Tick(float DeltaSeconds)
+/*void ASDTAIController::Tick(float DeltaSeconds)
 {
     // My idea of how we could do the navigation was the following : 
     // We keep 3 variables in the class to help indicate the state of the ai
@@ -49,11 +49,12 @@ void ASDTAIController::Tick(float DeltaSeconds)
     
     // follow the path  
     GoToBestTarget(DeltaSeconds);
-}
+}*/
 
 void ASDTAIController::GoToBestTarget(float deltaTime)
 {
     //Move to target depending on current behavior
+   
 }
 
 void ASDTAIController::OnMoveToTarget()
@@ -71,6 +72,19 @@ void ASDTAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollow
 void ASDTAIController::ShowNavigationPath()
 {
     //Show current navigation path DrawDebugLine and DrawDebugSphere
+    if (m_PathFollowingComponent->GetPath().IsValid()) {
+        //Get all the point of the path 
+        const TArray<FNavPathPoint>& points = m_PathFollowingComponent->GetPath()->GetPathPoints();
+        FVector PathStartingPoint = points[0].Location;
+        FVector PathEndingPoint;
+        //Draw the path with some dotes 
+        for (FNavPathPoint point : points) {
+            PathEndingPoint = point.Location;
+            DrawDebugLine(GetWorld(), PathStartingPoint, PathEndingPoint, FColor::Red);
+            DrawDebugSphere(GetWorld(), PathEndingPoint, 10.0f, 10, FColor::Green);
+            PathStartingPoint = PathEndingPoint;
+        }
+    }
 }
 
 void ASDTAIController::ChooseBehavior(float deltaTime)
@@ -113,7 +127,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
         if (mainCharacter->IsPoweredUp()) {
 
             // agent needs to flee the player
-            pawnState = FleeingPlayer;
+            m_pawnState = FleeingPlayer;
             setPathToBestEscapePoint();
             return;
 
@@ -121,7 +135,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
         else {
 
             // agent is chasing the player and we set the path to the current player position
-            pawnState = ChasingPlayer;
+            m_pawnState = ChasingPlayer;
             setPathToLocation(mainCharacter->GetActorLocation());
             return;
 
@@ -131,8 +145,8 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     }
 
     // if the actor is not already following a path or the target collectible has been picked up by someone else, find a new path to follow to the closest collectible
-    ASDTCollectible* target = Cast<ASDTCollectible>(targetCollectible);
-    if (!hasPath || target!= nullptr ||  target->IsOnCooldown()) {
+    ASDTCollectible* target = Cast<ASDTCollectible>(m_targetCollectible);
+    if (!m_hasPath || target!= nullptr ||  target->IsOnCooldown()) {
         setTargetCollectible();
         setPathToLocation(target->GetActorLocation());
     }
@@ -190,7 +204,7 @@ void ASDTAIController::setTargetCollectible()
         }
     }
 
-    targetCollectible = closestCollectible;
+    m_targetCollectible = closestCollectible;
 }
 
 void ASDTAIController::setPathToLocation(FVector location) {
