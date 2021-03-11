@@ -121,10 +121,12 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 
     // if the actor is not already following a path or the target collectible has been picked up by someone else, find a new path to follow to the closest collectible
     ASDTCollectible* target = Cast<ASDTCollectible>(m_targetCollectible);
+    if (m_targetCollectible != nullptr && Cast<ASDTCollectible>(m_targetCollectible)->IsOnCooldown()) {
+        AIStateInterrupted();
+    }
     if (!m_hasPath || target != nullptr) {
         setTargetCollectible();
         if (!Cast<ASDTCollectible>(m_targetCollectible)->IsOnCooldown()) {
-            UE_LOG(LogTemp, Warning, TEXT("Target!"));
             FVector location = m_targetCollectible->GetActorLocation();
             m_location = location;
         }
@@ -157,6 +159,8 @@ void ASDTAIController::AIStateInterrupted()
 {
     StopMovement();
     m_ReachedTarget = true;
+    m_targetCollectible = nullptr;
+    m_hasPath = false;
 }
 
 void ASDTAIController::setTargetCollectible()

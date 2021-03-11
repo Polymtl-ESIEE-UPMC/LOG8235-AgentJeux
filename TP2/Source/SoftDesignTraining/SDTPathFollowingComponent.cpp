@@ -18,15 +18,6 @@ void USDTPathFollowingComponent::FollowPathSegment(float DeltaTime)
     Super::FollowPathSegment(DeltaTime);
     const TArray<FNavPathPoint>& points = Path->GetPathPoints();
     const FNavPathPoint& segmentStart = points[MoveSegmentStartIndex];
-
-    if (SDTUtils::HasJumpFlag(segmentStart))
-    {
-        //update jump
-    }
-    else
-    {
-        //update navigation along path
-    }
 }
 
 void USDTPathFollowingComponent::SetMoveSegment(int32 segmentStartIndex)
