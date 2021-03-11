@@ -203,7 +203,7 @@ void ASDTAIController::JumpStart() {
     if (AtJumpSegment)
         return;
     else {
-        AIheight = GetCharacter()->GetActorLocation().Z;
+        AIheight = GetPawn()->GetActorLocation().Z;
         AtJumpSegment = true;
         InAir = true;
         Landing = false;
