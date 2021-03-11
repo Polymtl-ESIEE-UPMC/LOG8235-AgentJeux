@@ -15,7 +15,6 @@ USDTPathFollowingComponent::USDTPathFollowingComponent(const FObjectInitializer&
 
 void USDTPathFollowingComponent::FollowPathSegment(float DeltaTime)
 {
-
     Super::FollowPathSegment(DeltaTime);
     const TArray<FNavPathPoint>& points = Path->GetPathPoints();
     const FNavPathPoint& segmentStart = points[MoveSegmentStartIndex];
@@ -38,14 +37,10 @@ void USDTPathFollowingComponent::SetMoveSegment(int32 segmentStartIndex)
 
     const FNavPathPoint& segmentStart = points[MoveSegmentStartIndex];
 
-    if (SDTUtils::HasJumpFlag(segmentStart) && FNavMeshNodeFlags(segmentStart.Flags).IsNavLink())
+    if (FNavMeshNodeFlags(segmentStart.Flags).IsNavLink())
     {
         //Handle starting jump
-        Cast<ASDTAIController>(GetOwner());
-    }
-    else
-    {
-        //Handle normal segments
+        Cast<ASDTAIController>(GetOwner())->JumpStart();
     }
 }
 

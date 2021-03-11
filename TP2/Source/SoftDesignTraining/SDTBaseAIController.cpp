@@ -16,6 +16,7 @@ void ASDTBaseAIController::Tick(float deltaTime)
 {
     Super::Tick(deltaTime);
 
+    
     ChooseBehavior(deltaTime);
 
     if (m_ReachedTarget)
@@ -32,3 +33,5 @@ void ASDTBaseAIController::BeginPlay() {
     Super::BeginPlay();
     m_PathFollowingComponent = Cast<USDTPathFollowingComponent>(GetComponentByClass(USDTPathFollowingComponent::StaticClass()));
 }
+
+

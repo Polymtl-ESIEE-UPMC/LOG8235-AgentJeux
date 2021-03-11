@@ -2,10 +2,10 @@
 
 #include "SDTAIController.h"
 #include "SoftDesignTraining.h"
-#include "SoftDesignTrainingMainCharacter.h"
 #include "SDTCollectible.h"
 #include "SDTFleeLocation.h"
 #include "SDTPathFollowingComponent.h"
+#include "SoftDesignTrainingMainCharacter.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
 //#include "UnrealMathUtility.h"
@@ -17,56 +17,27 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
 {
 }
 
-/*void ASDTAIController::Tick(float DeltaSeconds)
-{
-    // My idea of how we could do the navigation was the following : 
-    // We keep 3 variables in the class to help indicate the state of the ai
-    // targetCollectible -> collectible the closest collectible we are trying to go to
-    //           we can use this target to verify the availability of the power-up
-    // path -> current path we are following
-    // pawnState -> enum to keep track of the current state { FleeingPlayer, ChasingPlayer, CollectingPowerUps }
-    // the main tick methode would consist of updating the target and path
-    // and then taking a step in the direction of the path
-
-    // to update the target and path here are the following steps :
-    // 1. if the player is visible and not powered-up, set the path to the player location and pawnState to ChasingPlayer
-    // 2. if the player is visible and powered-up, set path to closest escape point and pawnState to FleeingPlayer
-    // 3. if player is not visible, but pawnState is ChasingPlayer. Do not change path, the pawn must go to the last known location of the player which has been recorded in step 1.
-    // 4. if player is not visible, but pawnState is FleeingPlayer. Do not change path, the pawn must reach the escape point
-    // 5. if targetCollectible is a nullptr or is on cooldown, set targetCollectible and path to closest collectible
-    // 6. if the agent finishes a path, set targetCollectible and path to closest collectible
-    
-    // I believe this should give us the correct agent behavior
-    // I have updated the Choosebehavior function accordingly
-    // here are the functions we need to work on :
-    //      setPathToLocation(FVector location) -> defines a new path to the given location 
-    //      setPathToBestEscapePoint() -> chooses the best escape point and calls setPathToLocation() with its location
-    //      ShowNavigationPath() -> Show current navigation path DrawDebugLine and DrawDebugSphere
-    //      GoToBestTarget(float deltaTime) -> takes a step in the direction of the path 
-
-    // update the target and path
-    ChooseBehavior(DeltaSeconds);
-    
-    // follow the path  
-    GoToBestTarget(DeltaSeconds);
-}*/
-
 void ASDTAIController::GoToBestTarget(float deltaTime)
 {
     //Move to target depending on current behavior
-   
+    EPathFollowingRequestResult::Type moveResult  = MoveToLocation(m_location);
+    if (moveResult == EPathFollowingRequestResult::RequestSuccessful) {
+        OnMoveToTarget();
+    }
 }
 
 void ASDTAIController::OnMoveToTarget()
 {
+    m_hasPath = true;
     m_ReachedTarget = false;
 }
 
 void ASDTAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
 {
     Super::OnMoveCompleted(RequestID, Result);
-
     m_ReachedTarget = true;
+    m_targetCollectible = nullptr;
+    m_hasPath = false;
 }
 
 void ASDTAIController::ShowNavigationPath()
@@ -77,7 +48,7 @@ void ASDTAIController::ShowNavigationPath()
         const TArray<FNavPathPoint>& points = m_PathFollowingComponent->GetPath()->GetPathPoints();
         FVector PathStartingPoint = points[0].Location;
         FVector PathEndingPoint;
-        //Draw the path with some dotes 
+        //Draw the path with some DrawDebugSphere 
         for (FNavPathPoint point : points) {
             PathEndingPoint = point.Location;
             DrawDebugLine(GetWorld(), PathStartingPoint, PathEndingPoint, FColor::Red);
@@ -94,17 +65,22 @@ void ASDTAIController::ChooseBehavior(float deltaTime)
 
 void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 {
+    
     //finish jump before updating AI state
-    if (AtJumpSegment)
+    if (AtJumpSegment) {
+        UpdateJump(deltaTime);
         return;
-
+    }
+        
     APawn* selfPawn = GetPawn();
     if (!selfPawn)
         return;
 
-    ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-    if (!playerCharacter)
+    //Commenter pour le mode simulation
+    /*ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+    if (!playerCharacter) {
         return;
+    }*/
 
     FVector detectionStartLocation = selfPawn->GetActorLocation() + selfPawn->GetActorForwardVector() * m_DetectionCapsuleForwardStartingOffset;
     FVector detectionEndLocation = detectionStartLocation + selfPawn->GetActorForwardVector() * m_DetectionCapsuleHalfLength * 2;
@@ -119,13 +95,14 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 
     FHitResult detectionHit;
     GetHightestPriorityDetectionHit(allDetectionHits, detectionHit);
-
+    
     //Set behavior based on hit
     if (detectionHit.GetComponent() != nullptr && detectionHit.GetComponent()->GetCollisionObjectType() == COLLISION_PLAYER) {
         ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(GetWorld()->GetFirstPlayerController()->GetCharacter());
-        
-        if (mainCharacter->IsPoweredUp()) {
 
+        if (mainCharacter->IsPoweredUp()) {
+            // Stop the agent to make him flee the player
+            AIStateInterrupted();
             // agent needs to flee the player
             m_pawnState = FleeingPlayer;
             setPathToBestEscapePoint();
@@ -133,24 +110,25 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 
         }
         else {
-
+            // Stop the agent and make him chase the player
+            AIStateInterrupted();
             // agent is chasing the player and we set the path to the current player position
             m_pawnState = ChasingPlayer;
-            setPathToLocation(mainCharacter->GetActorLocation());
+            m_location = mainCharacter->GetActorLocation();
             return;
-
         }
-
-        
     }
 
     // if the actor is not already following a path or the target collectible has been picked up by someone else, find a new path to follow to the closest collectible
     ASDTCollectible* target = Cast<ASDTCollectible>(m_targetCollectible);
-    if (!m_hasPath || target!= nullptr ||  target->IsOnCooldown()) {
+    if (!m_hasPath || target != nullptr) {
         setTargetCollectible();
-        setPathToLocation(target->GetActorLocation());
+        if (!Cast<ASDTCollectible>(m_targetCollectible)->IsOnCooldown()) {
+            UE_LOG(LogTemp, Warning, TEXT("Target!"));
+            FVector location = m_targetCollectible->GetActorLocation();
+            m_location = location;
+        }
     }
-
 
     DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
 }
@@ -181,7 +159,7 @@ void ASDTAIController::AIStateInterrupted()
     m_ReachedTarget = true;
 }
 
-void ASDTAIController::setTargetCollectible() 
+void ASDTAIController::setTargetCollectible()
 {
     TArray<AActor*> FoundActors;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTCollectible::StaticClass(), FoundActors);
@@ -191,15 +169,17 @@ void ASDTAIController::setTargetCollectible()
     AActor* closestCollectible = nullptr;
     for (AActor* collectible : FoundActors)
     {
-        if (closestCollectible == nullptr){
-            closestCollectible = collectible;
-            bestDistance = (pawnLocation - closestCollectible->GetActorLocation()).SizeSquared();
-        }
-        else {
-            float currentDistance = (pawnLocation - collectible->GetActorLocation()).SizeSquared();
-            if (currentDistance < bestDistance) {
+        if (!Cast<ASDTCollectible>(collectible)->IsOnCooldown()) {
+            if (closestCollectible == nullptr) {
                 closestCollectible = collectible;
-                bestDistance = currentDistance;
+                bestDistance = (pawnLocation - closestCollectible->GetActorLocation()).SizeSquared();
+            }
+            else {
+                float currentDistance = (pawnLocation - collectible->GetActorLocation()).SizeSquared();
+                if (currentDistance < bestDistance) {
+                    closestCollectible = collectible;
+                    bestDistance = currentDistance;
+                }
             }
         }
     }
@@ -212,4 +192,41 @@ void ASDTAIController::setPathToLocation(FVector location) {
 }
 void ASDTAIController::setPathToBestEscapePoint() {
 
+}
+
+void ASDTAIController::JumpStart() {
+    // Return if alredy at jumpSegment
+    if (AtJumpSegment)
+        return;
+    else {
+        AIheight = GetCharacter()->GetActorLocation().Z;
+        AtJumpSegment = true;
+        InAir = true;
+        Landing = false;
+        jumpTimer = 0;
+    }
+}
+
+void ASDTAIController::UpdateJump(float delatTime) {
+    APawn* selfPawn = GetPawn();
+    if (!selfPawn)
+        return;
+    FVector position = selfPawn->GetActorLocation();
+    jumpTimer += delatTime;
+
+    float minJumpTime;
+    float maxJumpTime;
+    JumpCurve->GetTimeRange(minJumpTime, maxJumpTime);
+
+    // Jump is finish reset
+    if (jumpTimer >= maxJumpTime) {
+        Landing = true;
+        InAir = false;
+        AtJumpSegment = false;
+        jumpTimer = 0;
+    }
+    else {
+        position.Z = AIheight + JumpApexHeight * JumpCurve->GetFloatValue(jumpTimer);
+        selfPawn->SetActorLocation(position);
+    }
 }

@@ -44,10 +44,14 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
     bool Landing = false;
 
+    // Time since the start of the jump
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
+    float jumpTimer = 0.0f;
+
 public:
     virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
     void AIStateInterrupted();
-    //virtual void Tick(float DeltaSeconds);
+    void JumpStart();
 
 protected:
     void OnMoveToTarget();
@@ -55,14 +59,18 @@ protected:
     void UpdatePlayerInteraction(float deltaTime);
 
 private:
-    enum State { FleeingPlayer, ChasingPlayer, CollectingPowerUps};
+    enum State { FleeingPlayer, ChasingPlayer, CollectingPowerUps };
     State m_pawnState = CollectingPowerUps;
     bool m_hasPath = false;
     AActor* m_targetCollectible = nullptr;
+    FVector m_location = FVector();
+    float AIheight = 0.0f;
+
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void ChooseBehavior(float deltaTime) override;
     virtual void ShowNavigationPath() override;
     void setTargetCollectible();
     void setPathToLocation(FVector location);
     void setPathToBestEscapePoint();
+    void UpdateJump(float deltaTime);
 };
