@@ -76,7 +76,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     if (!selfPawn)
         return;
 
-    //Commenter pour le mode simulation
+    //Commenter pour le mode simulation <- A enlever 
     /*ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
     if (!playerCharacter) {
         return;
@@ -191,10 +191,9 @@ void ASDTAIController::setTargetCollectible()
     m_targetCollectible = closestCollectible;
 }
 
-void ASDTAIController::setPathToLocation(FVector location) {
 
-}
 void ASDTAIController::setPathToBestEscapePoint() {
+    ///Meme algo que pour collectible, mais pour le flee point 
 
 }
 

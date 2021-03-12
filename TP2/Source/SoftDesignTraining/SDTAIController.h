@@ -70,7 +70,6 @@ private:
     virtual void ChooseBehavior(float deltaTime) override;
     virtual void ShowNavigationPath() override;
     void setTargetCollectible();
-    void setPathToLocation(FVector location);
     void setPathToBestEscapePoint();
     void UpdateJump(float deltaTime);
 };
