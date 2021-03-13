@@ -100,7 +100,18 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     if (detectionHit.GetComponent() != nullptr && detectionHit.GetComponent()->GetCollisionObjectType() == COLLISION_PLAYER) {
         ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 
-        if (mainCharacter->IsPoweredUp()) {
+        FVector Start = GetPawn()->GetActorLocation();
+        FHitResult HitResult;
+        FCollisionObjectQueryParams ObjectQueryParams(FCollisionObjectQueryParams::AllObjects);
+        FCollisionQueryParams QueryParams = FCollisionQueryParams::DefaultQueryParam;
+        QueryParams.AddIgnoredActor(GetPawn());
+
+        GetWorld()->LineTraceSingleByObjectType(HitResult, Start, mainCharacter->GetActorLocation(), ObjectQueryParams, QueryParams);
+        
+        if (HitResult.GetComponent()->GetCollisionObjectType() != ECC_GameTraceChannel4) {
+            //player is not visible
+        }
+        else if (mainCharacter->IsPoweredUp()) {
             // Stop the agent to make him flee the player
             AIStateInterrupted();
             // agent needs to flee the player
@@ -110,25 +121,30 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 
         }
         else {
-            // Stop the agent and make him chase the player
-            AIStateInterrupted();
+            if(m_pawnState != ChasingPlayer)
+                AIStateInterrupted();
+
             // agent is chasing the player and we set the path to the current player position
             m_pawnState = ChasingPlayer;
             m_location = mainCharacter->GetActorLocation();
+            EPathFollowingRequestResult::Type moveResult = MoveToLocation(m_location);
             return;
         }
     }
+    else {
+        // if the actor is not already following a path or the target collectible has been picked up by someone else, find a new path to follow to the closest collectible
+        ASDTCollectible* target = Cast<ASDTCollectible>(m_targetCollectible);
+        if (m_targetCollectible != nullptr && Cast<ASDTCollectible>(m_targetCollectible)->IsOnCooldown()) {
+            UE_LOG(LogTemp, Warning, TEXT("thing got picked up  "));
+            AIStateInterrupted();
 
-    // if the actor is not already following a path or the target collectible has been picked up by someone else, find a new path to follow to the closest collectible
-    ASDTCollectible* target = Cast<ASDTCollectible>(m_targetCollectible);
-    if (m_targetCollectible != nullptr && Cast<ASDTCollectible>(m_targetCollectible)->IsOnCooldown()) {
-        AIStateInterrupted();
-    }
-    if (!m_hasPath || target != nullptr) {
-        setTargetCollectible();
-        if (!Cast<ASDTCollectible>(m_targetCollectible)->IsOnCooldown()) {
-            FVector location = m_targetCollectible->GetActorLocation();
-            m_location = location;
+        }
+        if (!m_hasPath || target != nullptr) {
+            setTargetCollectible();
+            if (!Cast<ASDTCollectible>(m_targetCollectible)->IsOnCooldown()) {
+                FVector location = m_targetCollectible->GetActorLocation();
+                m_location = location;
+            }
         }
     }
 
