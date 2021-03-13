@@ -44,7 +44,7 @@ void ASDTAIController::ShowNavigationPath()
 {
     //Show current navigation path DrawDebugLine and DrawDebugSphere
     if (m_PathFollowingComponent->GetPath().IsValid()) {
-        //Get all the point of the path 
+        //Get all the point of the path
         const TArray<FNavPathPoint>& points = m_PathFollowingComponent->GetPath()->GetPathPoints();
         FVector PathStartingPoint = points[0].Location;
         FVector PathEndingPoint;
@@ -174,20 +174,22 @@ void ASDTAIController::setTargetCollectible()
     for (AActor* collectible : FoundActors)
     {
         if (!Cast<ASDTCollectible>(collectible)->IsOnCooldown()) {
-            if (closestCollectible == nullptr) {
-                closestCollectible = collectible;
-                bestDistance = (pawnLocation - closestCollectible->GetActorLocation()).SizeSquared();
-            }
-            else {
-                float currentDistance = (pawnLocation - collectible->GetActorLocation()).SizeSquared();
-                if (currentDistance < bestDistance) {
+            EPathFollowingRequestResult::Type moveResult = MoveToLocation(collectible->GetActorLocation());
+            if (moveResult == EPathFollowingRequestResult::RequestSuccessful) {
+                if (closestCollectible == nullptr) {
                     closestCollectible = collectible;
-                    bestDistance = currentDistance;
+                    bestDistance = m_PathFollowingComponent->GetPath()->GetLength();
+                }
+                else {
+                    float currentDistance = m_PathFollowingComponent->GetPath()->GetLength();
+                    if (currentDistance < bestDistance) {
+                        closestCollectible = collectible;
+                        bestDistance = currentDistance;
+                    }
                 }
             }
         }
     }
-
     m_targetCollectible = closestCollectible;
 }
 
