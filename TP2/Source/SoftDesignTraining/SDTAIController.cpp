@@ -113,17 +113,18 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
         }
         else if (mainCharacter->IsPoweredUp()) {
             // Stop the agent to make him flee the player
-            AIStateInterrupted();
+            if (m_pawnState != FleeingPlayer)
+                AIStateInterrupted();
             // agent needs to flee the player
             m_pawnState = FleeingPlayer;
             setPathToBestEscapePoint();
+            EPathFollowingRequestResult::Type moveResult = MoveToLocation(m_location);
             return;
 
         }
         else {
             if(m_pawnState != ChasingPlayer)
                 AIStateInterrupted();
-
             // agent is chasing the player and we set the path to the current player position
             m_pawnState = ChasingPlayer;
             m_location = mainCharacter->GetActorLocation();
@@ -209,10 +210,38 @@ void ASDTAIController::setTargetCollectible()
     m_targetCollectible = closestCollectible;
 }
 
-
 void ASDTAIController::setPathToBestEscapePoint() {
-    ///Meme algo que pour collectible, mais pour le flee point 
+    TArray<AActor*> FoundActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTFleeLocation::StaticClass(), FoundActors);
 
+    ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+
+    FVector pawnLocation = GetPawn()->GetActorLocation();
+    float bestDistance;
+    float bestLength;
+    AActor* closestEscapePoint = nullptr;
+    for (AActor* escapePoint : FoundActors)
+    {
+        EPathFollowingRequestResult::Type moveResult = MoveToLocation(escapePoint->GetActorLocation());
+        if (moveResult == EPathFollowingRequestResult::RequestSuccessful) {
+            if (closestEscapePoint == nullptr) {
+                closestEscapePoint = escapePoint;
+                bestLength = m_PathFollowingComponent->GetPath()->GetLength();
+            }
+            else {
+                FVector nextPoint = m_PathFollowingComponent->GetPath()->GetPathPoints()[0].Location;
+                float distToPoint= (mainCharacter->GetActorLocation() - nextPoint).SizeSquared();
+                float distToPlayer = (mainCharacter->GetActorLocation() - pawnLocation).SizeSquared();
+                float currentLength = m_PathFollowingComponent->GetPath()->GetLength();
+                if (distToPlayer < distToPoint && currentLength < bestLength) {
+                    closestEscapePoint = escapePoint;
+                    bestLength = currentLength;
+                }
+            }
+        }
+    }
+    m_location = closestEscapePoint->GetActorLocation();
+    m_targetCollectible = closestEscapePoint;
 }
 
 void ASDTAIController::JumpStart() {
