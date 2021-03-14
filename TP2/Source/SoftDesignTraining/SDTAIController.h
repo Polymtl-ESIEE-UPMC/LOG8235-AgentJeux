@@ -64,13 +64,12 @@ private:
     bool m_hasPath = false;
     AActor* m_targetCollectible = nullptr;
     FVector m_location = FVector();
-    float AIheight = 0.0f;
+    float m_AIheight = 0.0f;
 
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void ChooseBehavior(float deltaTime) override;
     virtual void ShowNavigationPath() override;
     void setTargetCollectible();
-    void setPathToLocation(FVector location);
     void setPathToBestEscapePoint();
     void UpdateJump(float deltaTime);
 };
