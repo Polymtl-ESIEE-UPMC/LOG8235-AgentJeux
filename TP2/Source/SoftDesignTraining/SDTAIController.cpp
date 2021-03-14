@@ -61,7 +61,7 @@ void ASDTAIController::ShowNavigationPath()
 {
     //Show current navigation path DrawDebugLine and DrawDebugSphere
     if (m_PathFollowingComponent->GetPath().IsValid()) {
-        //Get all the point of the path 
+        //Get all the point of the path
         const TArray<FNavPathPoint>& points = m_PathFollowingComponent->GetPath()->GetPathPoints();
         FVector PathStartingPoint = points[0].Location;
         FVector PathEndingPoint;
@@ -130,7 +130,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
         QueryParams.AddIgnoredActor(GetPawn());
 
         GetWorld()->LineTraceSingleByObjectType(HitResult, Start, mainCharacter->GetActorLocation(), ObjectQueryParams, QueryParams);
-
+        
         if (HitResult.GetComponent()->GetCollisionObjectType() != ECC_GameTraceChannel4) {
             //player is not visible
         }
@@ -141,15 +141,17 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
             // agent needs to flee the player
             m_pawnState = FleeingPlayer;
             setPathToBestEscapePoint();
+            EPathFollowingRequestResult::Type moveResult = MoveToLocation(m_location);
             return;
 
         }
         else {
-            if (m_pawnState != ChasingPlayer)
+            if(m_pawnState != ChasingPlayer)
                 AIStateInterrupted();
             // agent is chasing the player and we set the path to the current player position
             m_pawnState = ChasingPlayer;
             m_location = mainCharacter->GetActorLocation();
+            EPathFollowingRequestResult::Type moveResult = MoveToLocation(m_location);
             return;
         }
     }
