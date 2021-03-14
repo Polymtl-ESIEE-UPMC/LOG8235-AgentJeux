@@ -141,7 +141,6 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
             // agent needs to flee the player
             m_pawnState = FleeingPlayer;
             setPathToBestEscapePoint();
-            EPathFollowingRequestResult::Type moveResult = MoveToLocation(m_location);
             return;
 
         }
@@ -151,7 +150,6 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
             // agent is chasing the player and we set the path to the current player position
             m_pawnState = ChasingPlayer;
             m_location = mainCharacter->GetActorLocation();
-            EPathFollowingRequestResult::Type moveResult = MoveToLocation(m_location);
             return;
         }
     }
