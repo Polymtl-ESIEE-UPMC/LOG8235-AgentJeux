@@ -239,36 +239,62 @@ void ASDTAIController::setTargetCollectible()
 /// <summary>
 /// Determine the best and closest escape point for the AI without crossing the player
 /// </summary>
-void ASDTAIController::setPathToBestEscapePoint() {
+//void ASDTAIController::setPathToBestEscapePoint() {
+//    TArray<AActor*> FoundActors;
+//    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTFleeLocation::StaticClass(), FoundActors);
+//
+//    ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+//
+//    FVector pawnLocation = GetPawn()->GetActorLocation();
+//    float bestLength;
+//    AActor* closestEscapePoint = nullptr;
+//    for (AActor* escapePoint : FoundActors)
+//    {
+//        //Determined path to the escape point location
+//        UNavigationPath* path = UNavigationSystemV1::FindPathToLocationSynchronously(GetWorld(), pawnLocation, escapePoint->GetActorLocation());
+//        float pathLength = path->GetPathLength();
+//        if (closestEscapePoint == nullptr) {
+//            closestEscapePoint = escapePoint;
+//            bestLength = pathLength;
+//        }
+//        else {
+//            FVector nextPoint = path->GetPath()->GetPathPoints()[0].Location;
+//            float distToPoint = (mainCharacter->GetActorLocation() - nextPoint).SizeSquared();
+//            float distToPlayer = (mainCharacter->GetActorLocation() - pawnLocation).SizeSquared();
+//            if (distToPlayer < distToPoint && pathLength < bestLength) {
+//                closestEscapePoint = escapePoint;
+//                bestLength = pathLength;
+//            }
+//        }
+//        
+//    }
+//    m_location = closestEscapePoint->GetActorLocation();
+//}
+
+/// <summary>
+/// Determine the best and closest escape point for the AI without crossing the player
+/// </summary>
+void ASDTAIController::setPathToBestEscapePoint()
+{
+    float maxDirectionScore = -(std::numeric_limits<float>::infinity());
     TArray<AActor*> FoundActors;
+    FVector bestEscapePoint;
+
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTFleeLocation::StaticClass(), FoundActors);
-
-    ASoftDesignTrainingMainCharacter* mainCharacter = static_cast<ASoftDesignTrainingMainCharacter*>(GetWorld()->GetFirstPlayerController()->GetCharacter());
-
-    FVector pawnLocation = GetPawn()->GetActorLocation();
-    float bestLength;
-    AActor* closestEscapePoint = nullptr;
+    FVector bestDirection = (GetPawn()->GetActorLocation() - GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation()).GetSafeNormal();
+    
     for (AActor* escapePoint : FoundActors)
     {
-        //Determined path to the escape point location
-        UNavigationPath* path = UNavigationSystemV1::FindPathToLocationSynchronously(GetWorld(), pawnLocation, escapePoint->GetActorLocation());
-        float pathLength = path->GetPathLength();
-        if (closestEscapePoint == nullptr) {
-            closestEscapePoint = escapePoint;
-            bestLength = pathLength;
+        FVector escapePointLocation = escapePoint->GetActorLocation();
+        FVector directionToEscapePoint = (escapePointLocation - GetPawn()->GetActorLocation()).GetSafeNormal();
+        float directionScore = FVector::DotProduct(directionToEscapePoint, bestDirection);
+        if (directionScore > maxDirectionScore)
+        {
+            bestEscapePoint = escapePointLocation;
+            maxDirectionScore = directionScore;
         }
-        else {
-            FVector nextPoint = path->GetPath()->GetPathPoints()[0].Location;
-            float distToPoint = (mainCharacter->GetActorLocation() - nextPoint).SizeSquared();
-            float distToPlayer = (mainCharacter->GetActorLocation() - pawnLocation).SizeSquared();
-            if (distToPlayer < distToPoint && pathLength < bestLength) {
-                closestEscapePoint = escapePoint;
-                bestLength = pathLength;
-            }
-        }
-        
     }
-    m_location = closestEscapePoint->GetActorLocation();
+    m_location = bestEscapePoint;
 }
 
 /// <summary>
