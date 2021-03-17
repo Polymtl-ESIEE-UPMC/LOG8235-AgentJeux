@@ -9,7 +9,6 @@
 #include "DrawDebugHelpers.h"
 #include "NavigationSystem.h"
 #include "Kismet/KismetMathLibrary.h"
-//#include "UnrealMathUtility.h"
 #include "SDTUtils.h"
 #include "EngineUtils.h"
 
@@ -25,7 +24,7 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
 void ASDTAIController::GoToBestTarget(float deltaTime)
 {
     //Move to target depending on current behavior
-    EPathFollowingRequestResult::Type moveResult  = MoveToLocation(m_location);
+    const EPathFollowingRequestResult::Type moveResult  = MoveToLocation(m_location);
     if (moveResult == EPathFollowingRequestResult::RequestSuccessful) {
         OnMoveToTarget();
     }
@@ -64,10 +63,9 @@ void ASDTAIController::ShowNavigationPath()
         //Get all the point of the path
         const TArray<FNavPathPoint>& points = m_PathFollowingComponent->GetPath()->GetPathPoints();
         FVector PathStartingPoint = points[0].Location;
-        FVector PathEndingPoint;
         //Draw the path with some DrawDebugSphere 
-        for (FNavPathPoint point : points) {
-            PathEndingPoint = point.Location;
+        for (const FNavPathPoint point : points) {
+            FVector PathEndingPoint = point.Location;
             DrawDebugLine(GetWorld(), PathStartingPoint, PathEndingPoint, FColor::Red);
             DrawDebugSphere(GetWorld(), PathEndingPoint, 10.0f, 10, FColor::Green);
             PathStartingPoint = PathEndingPoint;
@@ -212,25 +210,22 @@ void ASDTAIController::setTargetCollectible()
     TArray<AActor*> FoundActors;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTCollectible::StaticClass(), FoundActors);
 
-    FVector pawnLocation = GetPawn()->GetActorLocation();
-    float bestDistance;
+    const FVector pawnLocation = GetPawn()->GetActorLocation();
+    float bestDistance = -1;
     AActor* closestCollectible = nullptr;
     for (AActor* collectible : FoundActors)
     {
         if (!Cast<ASDTCollectible>(collectible)->IsOnCooldown()) {
             //Determined path to the collectible point location
-            float pathLength = UNavigationSystemV1::FindPathToLocationSynchronously(GetWorld(), pawnLocation, collectible->GetActorLocation())->GetPathLength();
-            if (closestCollectible == nullptr) {
+            const float pathLength = UNavigationSystemV1::FindPathToLocationSynchronously(GetWorld(), pawnLocation, collectible->GetActorLocation())->GetPathLength();
+            if (closestCollectible == nullptr || bestDistance == -1) {
                 closestCollectible = collectible;
                 bestDistance = pathLength;
             }
-            else {
-                if (pathLength < bestDistance) {
-                    closestCollectible = collectible;
-                    bestDistance = pathLength;
-                }
+            else if (pathLength < bestDistance) {
+	            closestCollectible = collectible;
+	            bestDistance = pathLength;
             }
-
         }
     }
     m_targetCollectible = closestCollectible;
@@ -246,13 +241,13 @@ void ASDTAIController::setPathToBestEscapePoint()
     FVector bestEscapePoint;
 
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASDTFleeLocation::StaticClass(), FoundActors);
-    FVector bestDirection = (GetPawn()->GetActorLocation() - GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation()).GetSafeNormal();
+    const FVector bestDirection = (GetPawn()->GetActorLocation() - GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation()).GetSafeNormal();
     
     for (AActor* escapePoint : FoundActors)
     {
         FVector escapePointLocation = escapePoint->GetActorLocation();
         FVector directionToEscapePoint = (escapePointLocation - GetPawn()->GetActorLocation()).GetSafeNormal();
-        float directionScore = FVector::DotProduct(directionToEscapePoint, bestDirection);
+        const float directionScore = FVector::DotProduct(directionToEscapePoint, bestDirection);
         if (directionScore > maxDirectionScore)
         {
             bestEscapePoint = escapePointLocation;
@@ -266,15 +261,13 @@ void ASDTAIController::setPathToBestEscapePoint()
 /// Function to start the jump animation over the death trap
 /// </summary>
 void ASDTAIController::JumpStart() {
-    // Return if alredy at jumpSegment
-    if (AtJumpSegment)
-        return;
-    else {
-        m_AIheight = GetPawn()->GetActorLocation().Z;
-        AtJumpSegment = true;
-        InAir = true;
-        Landing = false;
-        jumpTimer = 0;
+    if (!AtJumpSegment)
+    {
+	    m_AIheight = GetPawn()->GetActorLocation().Z;
+	    AtJumpSegment = true;
+	    InAir = true;
+	    Landing = false;
+	    jumpTimer = 0;
     }
 }
 
