@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "SDTBaseAIController.h"
+#include "BehaviorTree/BehaviorTreeComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
+
 #include "SDTAIController.generated.h"
 
 /**
@@ -44,6 +47,14 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
     bool Landing = false;
 
+	void StartBehaviorTree(APawn* pawn);
+
+	UPROPERTY(transient)
+	UBehaviorTreeComponent* m_behaviorTreeComponent;
+
+	UPROPERTY(transient)
+	UBlackboardComponent* m_blackboardComponent;
+
 protected:
 
     enum PlayerInteractionBehavior
@@ -58,7 +69,11 @@ protected:
     PlayerInteractionBehavior GetCurrentPlayerInteractionBehavior(const FHitResult& hit);
     bool HasLoSOnHit(const FHitResult& hit);
     void MoveToRandomCollectible();
+	
+	UFUNCTION(BlueprintCallable, Category = AI)
     void MoveToPlayer();
+
+	UFUNCTION(BlueprintCallable, Category = AI)
     void MoveToBestFleeLocation();
     void PlayerInteractionLoSUpdate();
     void OnPlayerInteractionNoLosDone();

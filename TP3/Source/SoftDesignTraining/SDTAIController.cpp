@@ -10,35 +10,52 @@
 //#include "UnrealMathUtility.h"
 #include "SDTUtils.h"
 #include "EngineUtils.h"
+#include "SoftDesignTrainingCharacter.h"
 
 ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<USDTPathFollowingComponent>(TEXT("PathFollowingComponent")))
 {
     m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
+
+	m_behaviorTreeComponent = CreateDefaultSubobject<UBehaviorTreeComponent>(TEXT("BehaviorTreeComponent"));
+	m_blackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
+
 }
 
 void ASDTAIController::GoToBestTarget(float deltaTime)
 {
-    switch (m_PlayerInteractionBehavior)
-    {
-    case PlayerInteractionBehavior_Collect:
+    // switch (m_PlayerInteractionBehavior)
+    // {
+    // case PlayerInteractionBehavior_Collect:
+    //
+    //     MoveToRandomCollectible();
+    //
+    //     break;
+    //
+    // case PlayerInteractionBehavior_Chase:
+    //
+    //     MoveToPlayer();
+    //
+    //     break;
+    //
+    // case PlayerInteractionBehavior_Flee:
+    //
+    //     MoveToBestFleeLocation();
+    //
+    //     break;
+    // }
+}
 
-        MoveToRandomCollectible();
 
-        break;
-
-    case PlayerInteractionBehavior_Chase:
-
-        MoveToPlayer();
-
-        break;
-
-    case PlayerInteractionBehavior_Flee:
-
-        MoveToBestFleeLocation();
-
-        break;
-    }
+void ASDTAIController::StartBehaviorTree(APawn* pawn)
+{
+	if (ASoftDesignTrainingCharacter* aiBaseCharacter = Cast<ASoftDesignTrainingCharacter>(pawn))
+	{
+		if (aiBaseCharacter->m_BehaviorTree)
+		{
+			m_behaviorTreeComponent->StartTree(*aiBaseCharacter->m_BehaviorTree);
+		}
+	}
 }
 
 void ASDTAIController::MoveToRandomCollectible()

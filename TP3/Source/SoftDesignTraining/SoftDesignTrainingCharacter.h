@@ -1,5 +1,6 @@
 // Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
 #pragma once
+#include "BehaviorTree/BehaviorTree.h"
 #include "GameFramework/Character.h"
 #include "SoftDesignTrainingCharacter.generated.h"
 
@@ -11,6 +12,9 @@ class ASoftDesignTrainingCharacter : public ACharacter
 
 public:
     ASoftDesignTrainingCharacter();
+
+	UPROPERTY(EditAnywhere, category = Behavior)
+	UBehaviorTree * m_BehaviorTree;
 
     virtual void BeginPlay() override;
     virtual void OnCollectPowerUp() {};

@@ -21,6 +21,12 @@ void ASoftDesignTrainingCharacter::BeginPlay()
 
     GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ASoftDesignTrainingCharacter::OnBeginOverlap);
     m_StartingPosition = GetActorLocation();
+
+
+	if (ASDTAIController* aiController = Cast<ASDTAIController>(GetController()))
+	{
+		aiController->StartBehaviorTree(this);
+	}
 }
 
 void ASoftDesignTrainingCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
