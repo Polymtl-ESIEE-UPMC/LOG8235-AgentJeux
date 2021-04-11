@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "SDTAIAgentGroupManager.h"
 #include "SDTAIController.h"
 #include "SoftDesignTraining.h"
 #include "SDTCollectible.h"
@@ -28,6 +29,8 @@ void ASDTAIController::GoToBestTarget(float deltaTime)
         break;
 
     case PlayerInteractionBehavior_Chase:
+
+        SDTAIAgentGroupManager::GetInstance()->RegisterAIAgent(this);
 
         MoveToPlayer();
 
