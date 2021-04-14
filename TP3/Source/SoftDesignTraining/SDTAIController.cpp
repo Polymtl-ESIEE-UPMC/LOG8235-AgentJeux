@@ -12,13 +12,13 @@
 #include "SDTUtils.h"
 #include "EngineUtils.h"
 #include "SoftDesignTrainingCharacter.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 
 ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<USDTPathFollowingComponent>(TEXT("PathFollowingComponent")))
 {
     m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
 
-	m_behaviorTreeComponent = CreateDefaultSubobject<UBehaviorTreeComponent>(TEXT("BehaviorTreeComponent"));
 	m_blackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
 
 }
@@ -63,6 +63,10 @@ void ASDTAIController::StartBehaviorTree(APawn* pawn)
 		if (aiBaseCharacter->m_BehaviorTree)
 		{
 			this->RunBehaviorTree(aiBaseCharacter->m_BehaviorTree);
+			m_blackboardComponent->InitializeBlackboard(*aiBaseCharacter->m_BehaviorTree->GetBlackboardAsset());
+			
+			m_blackboardComponent->SetValueAsEnum("Behavior", PlayerInteractionBehavior_Collect);
+			
 		}
 	}
 }
@@ -159,6 +163,7 @@ void ASDTAIController::OnPlayerInteractionNoLosDone()
     {
         AIStateInterrupted();
         m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
+		m_blackboardComponent->SetValueAsEnum("Behavior", PlayerInteractionBehavior_Collect);
     }
 }
 
@@ -335,7 +340,7 @@ void ASDTAIController::AIStateInterrupted()
     m_ReachedTarget = true;
 }
 
-ASDTAIController::PlayerInteractionBehavior ASDTAIController::GetCurrentPlayerInteractionBehavior(const FHitResult& hit)
+PlayerInteractionBehavior ASDTAIController::GetCurrentPlayerInteractionBehavior(const FHitResult& hit)
 {
     if (m_PlayerInteractionBehavior == PlayerInteractionBehavior_Collect)
     {
@@ -385,6 +390,9 @@ void ASDTAIController::UpdatePlayerInteractionBehavior(const FHitResult& detecti
     if (currentBehavior != m_PlayerInteractionBehavior)
     {
         m_PlayerInteractionBehavior = currentBehavior;
+    	
+        m_blackboardComponent->SetValueAsEnum("Behavior", currentBehavior);
+    	
         AIStateInterrupted();
     }
 }

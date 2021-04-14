@@ -10,6 +10,14 @@
 #include "FrameManager.h"
 #include "SDTAIController.generated.h"
 
+UENUM(BlueprintType)
+enum PlayerInteractionBehavior
+{
+	PlayerInteractionBehavior_Collect,
+    PlayerInteractionBehavior_Chase,
+    PlayerInteractionBehavior_Flee
+};
+
 /**
  * 
  */
@@ -52,20 +60,13 @@ public:
 
 	void StartBehaviorTree(APawn* pawn);
 
-	UPROPERTY(transient)
-	UBehaviorTreeComponent* m_behaviorTreeComponent;
 
-	UPROPERTY(transient)
 	UBlackboardComponent* m_blackboardComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Status)
+    TEnumAsByte<PlayerInteractionBehavior> m_PlayerInteractionBehavior;
 
 protected:
-
-    enum PlayerInteractionBehavior
-    {
-        PlayerInteractionBehavior_Collect,
-        PlayerInteractionBehavior_Chase,
-        PlayerInteractionBehavior_Flee
-    };
 
     void GetHightestPriorityDetectionHit(const TArray<FHitResult>& hits, FHitResult& outDetectionHit);
     void UpdatePlayerInteractionBehavior(const FHitResult& detectionHit, float deltaTime);
@@ -103,5 +104,5 @@ protected:
     FVector m_JumpTarget;
     FRotator m_ObstacleAvoidanceRotation;
     FTimerHandle m_PlayerInteractionNoLosTimer;
-    PlayerInteractionBehavior m_PlayerInteractionBehavior;
+
 };
