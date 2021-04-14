@@ -89,6 +89,7 @@ public:
     void RotateTowards(const FVector& targetLocation);
     void SetActorLocation(const FVector& targetLocation);
     void AIStateInterrupted();
+    void SetSurroundingPoint(FVector anchorPoint) { m_surroundingPoint = anchorPoint; }
 
 private:
     virtual void GoToBestTarget(float deltaTime) override;
@@ -98,6 +99,7 @@ private:
     
     FrameManager* m_frameManager;
     uint64 m_lastUpdateFrame;
+    FVector m_surroundingPoint;
 
 protected:
     FVector m_JumpTarget;
