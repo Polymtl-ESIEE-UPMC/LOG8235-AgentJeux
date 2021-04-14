@@ -71,6 +71,8 @@ protected:
     void UpdatePlayerInteractionBehavior(const FHitResult& detectionHit, float deltaTime);
     PlayerInteractionBehavior GetCurrentPlayerInteractionBehavior(const FHitResult& hit);
     bool HasLoSOnHit(const FHitResult& hit);
+	
+	UFUNCTION(BlueprintCallable, Category = AI)
     void MoveToRandomCollectible();
 	
 	UFUNCTION(BlueprintCallable, Category = AI)
