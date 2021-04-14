@@ -44,6 +44,8 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
     bool Landing = false;
 
+    virtual void BeginPlay() override;
+
 protected:
 
     enum PlayerInteractionBehavior

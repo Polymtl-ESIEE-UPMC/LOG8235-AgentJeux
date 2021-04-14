@@ -11,11 +11,19 @@
 //#include "UnrealMathUtility.h"
 #include "SDTUtils.h"
 #include "EngineUtils.h"
+#include "FrameManager.h"
 
 ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<USDTPathFollowingComponent>(TEXT("PathFollowingComponent")))
 {
     m_PlayerInteractionBehavior = PlayerInteractionBehavior_Collect;
+}
+
+void ASDTAIController::BeginPlay()
+{
+    Super::BeginPlay();
+    FrameManager* frameManager = FrameManager::GetInstance();
+    frameManager->increaseAiCount();
 }
 
 void ASDTAIController::GoToBestTarget(float deltaTime)
