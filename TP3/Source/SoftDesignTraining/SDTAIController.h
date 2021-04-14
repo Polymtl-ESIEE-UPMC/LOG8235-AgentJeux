@@ -73,13 +73,16 @@ public:
     void SetActorLocation(const FVector& targetLocation);
     void AIStateInterrupted();
 
+
+    
 private:
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void UpdatePlayerInteraction(float deltaTime) override;
     virtual void ShowNavigationPath() override;
 
+    
     FrameManager* m_frameManager;
-
+    uint64 lastUpdateFrame;
 
 protected:
     FVector m_JumpTarget;

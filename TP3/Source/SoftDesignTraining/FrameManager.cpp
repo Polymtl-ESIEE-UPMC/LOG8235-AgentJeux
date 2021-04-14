@@ -32,7 +32,7 @@ void FrameManager::Destroy()
 /// Verify if we can update the AI agent in the frame budget
 /// </summary>
 /// <param name="frameExecuted"> Actual frame execute </param>
-/// <returns></returns>
+/// <returns> True or false </returns>
 bool FrameManager::canExecute(uint64& frameExecute) {
 
 	uint64 deltaExecuteTime = GFrameCounter - frameExecute;
