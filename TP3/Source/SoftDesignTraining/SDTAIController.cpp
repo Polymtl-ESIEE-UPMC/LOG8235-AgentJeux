@@ -62,7 +62,7 @@ void ASDTAIController::StartBehaviorTree(APawn* pawn)
 	{
 		if (aiBaseCharacter->m_BehaviorTree)
 		{
-			m_behaviorTreeComponent->StartTree(*aiBaseCharacter->m_BehaviorTree);
+			this->RunBehaviorTree(aiBaseCharacter->m_BehaviorTree);
 		}
 	}
 }
