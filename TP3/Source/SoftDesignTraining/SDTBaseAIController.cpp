@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+
 #include "SDTBaseAIController.h"
+#include "SDTAIAgentGroupManager.h"
 #include "SoftDesignTraining.h"
 
 ASDTBaseAIController::ASDTBaseAIController(const FObjectInitializer& ObjectInitializer)
@@ -16,6 +18,8 @@ void ASDTBaseAIController::Tick(float deltaTime)
     Super::Tick(deltaTime);
 
     UpdatePlayerInteraction(deltaTime);
+
+    SDTAIAgentGroupManager::GetInstance()->UnregisterAIAgent(this);
 
     if (m_ReachedTarget)
     {

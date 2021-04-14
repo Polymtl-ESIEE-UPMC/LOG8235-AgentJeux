@@ -7,6 +7,7 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+#include "FrameManager.h"
 #include "SDTAIController.generated.h"
 
 /**
@@ -46,6 +47,8 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
     bool Landing = false;
+
+    virtual void BeginPlay() override;
 
 	void StartBehaviorTree(APawn* pawn);
 
@@ -90,6 +93,9 @@ private:
     virtual void UpdatePlayerInteraction(float deltaTime) override;
     virtual void ShowNavigationPath() override;
 
+    
+    FrameManager* m_frameManager;
+    uint64 m_lastUpdateFrame;
 
 protected:
     FVector m_JumpTarget;

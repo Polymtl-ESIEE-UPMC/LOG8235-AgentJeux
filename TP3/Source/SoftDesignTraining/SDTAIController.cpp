@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SDTAIController.h"
+#include "SDTAIAgentGroupManager.h"
 #include "SoftDesignTraining.h"
 #include "SDTCollectible.h"
 #include "SDTFleeLocation.h"
@@ -22,6 +23,13 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
 
 }
 
+void ASDTAIController::BeginPlay()
+{
+    Super::BeginPlay();
+    m_frameManager = FrameManager::GetInstance();
+    m_frameManager->increaseAiCount();
+}
+
 void ASDTAIController::GoToBestTarget(float deltaTime)
 {
     // switch (m_PlayerInteractionBehavior)
@@ -33,6 +41,8 @@ void ASDTAIController::GoToBestTarget(float deltaTime)
     //     break;
     //
     // case PlayerInteractionBehavior_Chase:
+    //
+    //     SDTAIAgentGroupManager::GetInstance()->RegisterAIAgent(this);
     //
     //     MoveToPlayer();
     //
@@ -46,7 +56,6 @@ void ASDTAIController::GoToBestTarget(float deltaTime)
     // }
 }
 
-
 void ASDTAIController::StartBehaviorTree(APawn* pawn)
 {
 	if (ASoftDesignTrainingCharacter* aiBaseCharacter = Cast<ASoftDesignTrainingCharacter>(pawn))
@@ -57,6 +66,7 @@ void ASDTAIController::StartBehaviorTree(APawn* pawn)
 		}
 	}
 }
+
 
 void ASDTAIController::MoveToRandomCollectible()
 {
