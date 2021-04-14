@@ -82,7 +82,7 @@ private:
 
     
     FrameManager* m_frameManager;
-    uint64 lastUpdateFrame;
+    uint64 m_lastUpdateFrame;
 
 protected:
     FVector m_JumpTarget;
