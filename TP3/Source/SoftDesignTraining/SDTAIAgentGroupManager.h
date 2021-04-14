@@ -3,6 +3,7 @@
 #pragma once
 
 #include "SDTBaseAIController.h"
+#include "SDTAIController.h"
 #include "CoreMinimal.h"
 
 /**
@@ -14,8 +15,10 @@ public:
     static SDTAIAgentGroupManager* GetInstance();
     static void Destroy();
 
-    void RegisterAIAgent(ASDTBaseAIController* aiAgent);
-    void UnregisterAIAgent(ASDTBaseAIController* aiAgent);
+    void RegisterAIAgent(ASDTAIController* aiAgent);
+    void UnregisterAIAgent(ASDTAIController* aiAgent);
+    void DrawSphere();
+    void GenerateSurroundingPoints();
 
 private:
 
@@ -23,5 +26,7 @@ private:
     SDTAIAgentGroupManager();
     static SDTAIAgentGroupManager* m_Instance;
 
-    TArray<ASDTBaseAIController*> m_registeredAgents;
+    TArray<ASDTAIController*> m_registeredAgents;
+    uint64 m_lastFrameUpdatePoint;
+    TArray<FVector> m_surroundingPoints;
 };
