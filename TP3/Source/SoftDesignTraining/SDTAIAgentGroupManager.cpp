@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "SDTBaseAIController.h"
 #include "SDTAIAgentGroupManager.h"
+#include "SDTBaseAIController.h"
 #include "DrawDebugHelpers.h"
 
 SDTAIAgentGroupManager* SDTAIAgentGroupManager::m_Instance;

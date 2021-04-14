@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "SDTBaseAIController.h"
+#include "FrameManager.h"
 #include "SDTAIController.generated.h"
 
 /**
@@ -76,6 +77,8 @@ private:
     virtual void GoToBestTarget(float deltaTime) override;
     virtual void UpdatePlayerInteraction(float deltaTime) override;
     virtual void ShowNavigationPath() override;
+
+    FrameManager* m_frameManager;
 
 
 protected:

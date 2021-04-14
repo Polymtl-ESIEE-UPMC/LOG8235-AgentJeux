@@ -1,7 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "SDTAIAgentGroupManager.h"
+
 #include "SDTAIController.h"
+#include "SDTAIAgentGroupManager.h"
 #include "SoftDesignTraining.h"
 #include "SDTCollectible.h"
 #include "SDTFleeLocation.h"
@@ -11,7 +12,7 @@
 //#include "UnrealMathUtility.h"
 #include "SDTUtils.h"
 #include "EngineUtils.h"
-#include "FrameManager.h"
+
 
 ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<USDTPathFollowingComponent>(TEXT("PathFollowingComponent")))
@@ -22,8 +23,8 @@ ASDTAIController::ASDTAIController(const FObjectInitializer& ObjectInitializer)
 void ASDTAIController::BeginPlay()
 {
     Super::BeginPlay();
-    FrameManager* frameManager = FrameManager::GetInstance();
-    frameManager->increaseAiCount();
+    m_frameManager = FrameManager::GetInstance();
+    m_frameManager->increaseAiCount();
 }
 
 void ASDTAIController::GoToBestTarget(float deltaTime)

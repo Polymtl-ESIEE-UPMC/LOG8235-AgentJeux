@@ -1,6 +1,7 @@
 
-#include "SoftDesignTraining.h"
 #include "FrameManager.h"
+#include "SoftDesignTraining.h"
+
 
 
 FrameManager* FrameManager::m_Instance;
