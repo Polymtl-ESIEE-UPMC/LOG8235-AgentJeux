@@ -398,3 +398,14 @@ void ASDTAIController::UpdatePlayerInteractionBehavior(const FHitResult& detecti
         AIStateInterrupted();
     }
 }
+
+void ASDTAIController::MoveToSurroundingPoints()
+{
+    SDTAIAgentGroupManager* aiAgentGroupManager = SDTAIAgentGroupManager::GetInstance();
+
+    aiAgentGroupManager->DrawSphere();
+    aiAgentGroupManager->GenerateSurroundingPoints();
+
+    MoveToLocation(m_surroundingPoint, 0.5f, false, true, true, NULL, false);
+    OnMoveToTarget();
+}

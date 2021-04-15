@@ -82,11 +82,14 @@ void SDTAIAgentGroupManager::GenerateSurroundingPoints() {
 
 	for (int i = 0; i < m_registeredAgents.Num(); i++) {
 		FVector position = playerPosition;
+
 		position.X += radius * cos(currentAngle);
 		position.Y += radius * sin(currentAngle);
 
 		m_registeredAgents[i]->SetSurroundingPoint(position);
 		currentAngle += angle;
+
+		DrawDebugSphere(aicontroller->GetWorld(), position + FVector(0.f, 0.f, 100.f), 25.0f, 32, FColor::Purple);
 	}
 
 }

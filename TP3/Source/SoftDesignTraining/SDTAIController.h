@@ -79,6 +79,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
     void MoveToPlayer();
 
+    UFUNCTION(BlueprintCallable, Category = AI)
+    void MoveToSurroundingPoints();
+
 	UFUNCTION(BlueprintCallable, Category = AI)
     void MoveToBestFleeLocation();
     void PlayerInteractionLoSUpdate();

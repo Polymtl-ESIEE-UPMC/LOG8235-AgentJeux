@@ -8,6 +8,7 @@
 #include "SDTUtils.h"
 #include "DrawDebugHelpers.h"
 #include "SDTCollectible.h"
+#include "SDTAIAgentGroupManager.h"
 
 
 ASoftDesignTrainingCharacter::ASoftDesignTrainingCharacter()
@@ -58,5 +59,16 @@ void ASoftDesignTrainingCharacter::Die()
     if (ASDTAIController* controller = Cast<ASDTAIController>(GetController()))
     {
         controller->AIStateInterrupted();
+    }
+}
+
+void ASoftDesignTrainingCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+
+    SDTAIAgentGroupManager* aiAgentGroupManager = SDTAIAgentGroupManager::GetInstance();
+    if (aiAgentGroupManager)
+    {
+        aiAgentGroupManager->Destroy();
     }
 }
