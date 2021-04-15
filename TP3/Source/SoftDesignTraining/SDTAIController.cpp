@@ -46,10 +46,10 @@ void ASDTAIController::StartBehaviorTree(APawn* pawn)
 	}
 }
 
-
 void ASDTAIController::MoveToRandomCollectible()
 {
-
+    //Profiling CPU Collectible
+    double startTime = FPlatformTime::ToMilliseconds(FPlatformTime::Cycles());
 
     float closestSqrCollectibleDistance = 18446744073709551610.f;
     ASDTCollectible* closestCollectible = nullptr;
@@ -67,8 +67,11 @@ void ASDTAIController::MoveToRandomCollectible()
 
         if (!collectibleActor->IsOnCooldown() && m_ReachedTarget)
         {
+            //End profiling
+            double timeTaken = FPlatformTime::ToMilliseconds(FPlatformTime::Cycles()) - startTime;
             MoveToLocation(foundCollectibles[index]->GetActorLocation(), 0.5f, false, true, true, NULL, false);
             OnMoveToTarget();
+            DrawDebugString(GetWorld(), FVector(0.f, 0.f, 6.f), "collectible: " + FString::SanitizeFloat(timeTaken) + "ms", GetPawn(), FColor::Green, .8f, false);
             return;
         }
         else
@@ -146,6 +149,9 @@ void ASDTAIController::OnPlayerInteractionNoLosDone()
 
 void ASDTAIController::MoveToBestFleeLocation()
 {
+    //Profiling CPU Flee location
+    double startTime = FPlatformTime::ToMilliseconds(FPlatformTime::Cycles());
+
     float bestLocationScore = 0.f;
     ASDTFleeLocation* bestFleeLocation = nullptr;
 
@@ -179,11 +185,16 @@ void ASDTAIController::MoveToBestFleeLocation()
         }
     }
 
-    if (bestFleeLocation)
+    if (bestFleeLocation && m_ReachedTarget)
     {
+        //End profiling 
+        double timeTaken = FPlatformTime::ToMilliseconds(FPlatformTime::Cycles()) - startTime;
+        DrawDebugString(GetWorld(), FVector(0.f, 0.f, 7.f), "flee: " + FString::SanitizeFloat(timeTaken) + "ms", GetPawn(), FColor::Purple, 0.8f, false);
         MoveToLocation(bestFleeLocation->GetActorLocation(), 0.5f, false, true, false, NULL, false);
         OnMoveToTarget();
     }
+    
+
 }
 
 void ASDTAIController::OnMoveToTarget()
@@ -240,37 +251,6 @@ void ASDTAIController::ShowNavigationPath()
 
 void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 {
-    //finish jump before updating AI state
-    if (AtJumpSegment)
-        return;
-
-    APawn* selfPawn = GetPawn();
-    if (!selfPawn)
-        return;
-
-    ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-    if (!playerCharacter)
-        return;
-
-    FVector detectionStartLocation = selfPawn->GetActorLocation() + selfPawn->GetActorForwardVector() * m_DetectionCapsuleForwardStartingOffset;
-    FVector detectionEndLocation = detectionStartLocation + selfPawn->GetActorForwardVector() * m_DetectionCapsuleHalfLength * 2;
-
-    TArray<TEnumAsByte<EObjectTypeQuery>> detectionTraceObjectTypes;
-    detectionTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(COLLISION_PLAYER));
-
-    TArray<FHitResult> allDetectionHits;
-    GetWorld()->SweepMultiByObjectType(allDetectionHits, detectionStartLocation, detectionEndLocation, FQuat::Identity, detectionTraceObjectTypes, FCollisionShape::MakeSphere(m_DetectionCapsuleRadius));
-
-    FHitResult detectionHit;
-    GetHightestPriorityDetectionHit(allDetectionHits, detectionHit);
-
-    UpdatePlayerInteractionBehavior(detectionHit, deltaTime);
-
-    if (GetMoveStatus() == EPathFollowingStatus::Idle)
-    {
-        m_ReachedTarget = true;
-    }
-
     FString debugString = "";
 
     switch (m_PlayerInteractionBehavior)
@@ -287,6 +267,48 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
     }
 
     DrawDebugString(GetWorld(), FVector(0.f, 0.f, 5.f), debugString, GetPawn(), FColor::Orange, 0.f, false);
+
+    // Verify if we have the budget for this frame
+    if (!m_frameManager->canExecute(m_lastUpdateFrame))
+        return;
+
+    //finish jump before updating AI state
+    if (AtJumpSegment)
+        return;
+
+    APawn* selfPawn = GetPawn();
+    if (!selfPawn)
+        return;
+
+    ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+    if (!playerCharacter)
+        return;
+
+    //Profiling CPU player detection
+    double startTime = FPlatformTime::ToMilliseconds(FPlatformTime::Cycles());
+
+    FVector detectionStartLocation = selfPawn->GetActorLocation() + selfPawn->GetActorForwardVector() * m_DetectionCapsuleForwardStartingOffset;
+    FVector detectionEndLocation = detectionStartLocation + selfPawn->GetActorForwardVector() * m_DetectionCapsuleHalfLength * 2;
+
+    TArray<TEnumAsByte<EObjectTypeQuery>> detectionTraceObjectTypes;
+    detectionTraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(COLLISION_PLAYER));
+
+    TArray<FHitResult> allDetectionHits;
+    GetWorld()->SweepMultiByObjectType(allDetectionHits, detectionStartLocation, detectionEndLocation, FQuat::Identity, detectionTraceObjectTypes, FCollisionShape::MakeSphere(m_DetectionCapsuleRadius));
+
+    FHitResult detectionHit;
+    GetHightestPriorityDetectionHit(allDetectionHits, detectionHit);
+
+    UpdatePlayerInteractionBehavior(detectionHit, deltaTime);
+
+    //End profiling 
+    double timeTaken = FPlatformTime::ToMilliseconds(FPlatformTime::Cycles()) - startTime;
+    DrawDebugString(GetWorld(), FVector(0.f, 0.f, 8.f), "player: " + FString::SanitizeFloat(timeTaken) + "ms", GetPawn(), FColor::Black, 0.5f, false);
+
+    if (GetMoveStatus() == EPathFollowingStatus::Idle)
+    {
+        m_ReachedTarget = true;
+    }
 
     DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
 }

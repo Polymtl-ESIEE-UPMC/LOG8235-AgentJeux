@@ -49,7 +49,7 @@ void SDTAIAgentGroupManager::DrawSphere() {
 		if (aicontroller)
 		{
 			FVector actorLocation = aicontroller->GetPawn()->GetActorLocation();
-			DrawDebugSphere(aicontroller->GetWorld(), actorLocation + FVector(0.f, 0.f, 100.f), 25.0f, 32, FColor::Green);
+			DrawDebugSphere(aicontroller->GetWorld(), actorLocation + FVector(0.f, 0.f, 100.f), 15.0f, 8, FColor::Green, 0.f);
 		}
 	}
 }
@@ -106,7 +106,6 @@ void SDTAIAgentGroupManager::GenerateSurroundingPoints() {
 		m_registeredAgents[i]->SetSurroundingPoint(position);
 		currentAngle += angle;
 
-		DrawDebugSphere(aiController->GetWorld(), position + FVector(0.f, 0.f, 100.f), 25.0f, 32, FColor::Purple);
+		DrawDebugSphere(aiController->GetWorld(), position + FVector(0.f, 0.f, 100.f), 15.0f, 8, FColor::Purple, 0.f);
 	}
-
 }
