@@ -74,6 +74,8 @@ void ASDTAIController::StartBehaviorTree(APawn* pawn)
 
 void ASDTAIController::MoveToRandomCollectible()
 {
+
+
     float closestSqrCollectibleDistance = 18446744073709551610.f;
     ASDTCollectible* closestCollectible = nullptr;
 
@@ -88,7 +90,7 @@ void ASDTAIController::MoveToRandomCollectible()
         if (!collectibleActor)
             return;
 
-        if (!collectibleActor->IsOnCooldown())
+        if (!collectibleActor->IsOnCooldown() && m_ReachedTarget)
         {
             MoveToLocation(foundCollectibles[index]->GetActorLocation(), 0.5f, false, true, true, NULL, false);
             OnMoveToTarget();
