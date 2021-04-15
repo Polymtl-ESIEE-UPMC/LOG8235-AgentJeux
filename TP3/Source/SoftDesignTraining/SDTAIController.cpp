@@ -30,31 +30,6 @@ void ASDTAIController::BeginPlay()
     m_frameManager->increaseAiCount();
 }
 
-void ASDTAIController::GoToBestTarget(float deltaTime)
-{
-    // switch (m_PlayerInteractionBehavior)
-    // {
-    // case PlayerInteractionBehavior_Collect:
-    //
-    //     MoveToRandomCollectible();
-    //
-    //     break;
-    //
-    // case PlayerInteractionBehavior_Chase:
-    //
-    //     SDTAIAgentGroupManager::GetInstance()->RegisterAIAgent(this);
-    //
-    //     MoveToPlayer();
-    //
-    //     break;
-    //
-    // case PlayerInteractionBehavior_Flee:
-    //
-    //     MoveToBestFleeLocation();
-    //
-    //     break;
-    // }
-}
 
 void ASDTAIController::StartBehaviorTree(APawn* pawn)
 {
@@ -105,11 +80,11 @@ void ASDTAIController::MoveToRandomCollectible()
 
 void ASDTAIController::MoveToPlayer()
 {
-    ACharacter * playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-    if (!playerCharacter)
-        return;
+    SDTAIAgentGroupManager * groupManager = SDTAIAgentGroupManager::GetInstance();
+    groupManager->DrawSphere();
+    groupManager->GenerateSurroundingPoints();
 
-    MoveToActor(playerCharacter, 0.5f, false, true, true, NULL, false);
+    MoveToLocation(m_surroundingPoint, 0.5f, false, true, true, NULL, false);
     OnMoveToTarget();
 }
 
@@ -344,6 +319,7 @@ void ASDTAIController::AIStateInterrupted()
 
 PlayerInteractionBehavior ASDTAIController::GetCurrentPlayerInteractionBehavior(const FHitResult& hit)
 {
+    SDTAIAgentGroupManager* groupManager = SDTAIAgentGroupManager::GetInstance();
     if (m_PlayerInteractionBehavior == PlayerInteractionBehavior_Collect)
     {
         if (!hit.GetComponent())
@@ -355,13 +331,26 @@ PlayerInteractionBehavior ASDTAIController::GetCurrentPlayerInteractionBehavior(
         if (!HasLoSOnHit(hit))
             return PlayerInteractionBehavior_Collect;
 
-        return SDTUtils::IsPlayerPoweredUp(GetWorld()) ? PlayerInteractionBehavior_Flee : PlayerInteractionBehavior_Chase;
+        if (!SDTUtils::IsPlayerPoweredUp(GetWorld()) == PlayerInteractionBehavior_Chase) {
+            groupManager->RegisterAIAgent(this);
+            return PlayerInteractionBehavior_Chase;
+        }
+        else {
+            groupManager->UnregisterAIAgent(this);
+            return PlayerInteractionBehavior_Flee;
+        }
     }
     else
     {
         PlayerInteractionLoSUpdate();
-
-        return SDTUtils::IsPlayerPoweredUp(GetWorld()) ? PlayerInteractionBehavior_Flee : PlayerInteractionBehavior_Chase;
+        if (!SDTUtils::IsPlayerPoweredUp(GetWorld()) == PlayerInteractionBehavior_Chase) {
+            groupManager->RegisterAIAgent(this);
+            return PlayerInteractionBehavior_Chase;
+        }
+        else {
+            groupManager->UnregisterAIAgent(this);
+            return PlayerInteractionBehavior_Flee;
+        }
     }
 }
 
@@ -397,15 +386,4 @@ void ASDTAIController::UpdatePlayerInteractionBehavior(const FHitResult& detecti
     	
         AIStateInterrupted();
     }
-}
-
-void ASDTAIController::MoveToSurroundingPoints()
-{
-    SDTAIAgentGroupManager* aiAgentGroupManager = SDTAIAgentGroupManager::GetInstance();
-
-    aiAgentGroupManager->DrawSphere();
-    aiAgentGroupManager->GenerateSurroundingPoints();
-
-    MoveToLocation(m_surroundingPoint, 0.5f, false, true, true, NULL, false);
-    OnMoveToTarget();
 }

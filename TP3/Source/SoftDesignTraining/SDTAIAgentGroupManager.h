@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "SDTBaseAIController.h"
+
 #include "SDTAIController.h"
 #include "CoreMinimal.h"
 

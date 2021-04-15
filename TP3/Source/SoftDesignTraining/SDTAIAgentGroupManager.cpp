@@ -29,7 +29,8 @@ void SDTAIAgentGroupManager::Destroy()
 
 void SDTAIAgentGroupManager::RegisterAIAgent(ASDTAIController* aiAgent)
 {
-    m_registeredAgents.Add(aiAgent);
+	// AddUnique add the agent only if it doesn't exist in the array already
+	m_registeredAgents.AddUnique(aiAgent);
 }
 
 void SDTAIAgentGroupManager::UnregisterAIAgent(ASDTAIController* aiAgent)
@@ -59,8 +60,20 @@ void SDTAIAgentGroupManager::DrawSphere() {
 void SDTAIAgentGroupManager::GenerateSurroundingPoints() {
 	
 	//Check if there more than one agent in the group
-	if (m_registeredAgents.Num() <= 1)
+	if (m_registeredAgents.Num() == 0) {
 		return;
+	}
+	else if (m_registeredAgents.Num() == 1)
+	{
+		ASDTAIController* aiController = m_registeredAgents[0];
+		ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(aiController->GetWorld(), 0);
+
+		if (!playerCharacter)
+			return;
+
+		aiController->SetSurroundingPoint(playerCharacter->GetActorLocation());
+		return;
+	}
 
 	// Check if the generation of points was already done in the frame by one agent
 	if (m_lastFrameUpdatePoint == GFrameCounter)
@@ -71,13 +84,17 @@ void SDTAIAgentGroupManager::GenerateSurroundingPoints() {
 	m_surroundingPoints.Empty();
 
 	float circle = 2.f * PI;
-	float numbersurroundingPoints = m_registeredAgents.Num();
-	float angle = circle / numbersurroundingPoints;
+	float numberSurroundingPoints = m_registeredAgents.Num();
+	float angle = circle / numberSurroundingPoints;
 	float radius = 150.f;
 	float currentAngle = 0.f;
 
-	AAIController* aicontroller = m_registeredAgents[0];
-	ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(aicontroller->GetWorld(), 0);
+	ASDTAIController* aiController = m_registeredAgents[0];
+	ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(aiController->GetWorld(), 0);
+	
+	if (!playerCharacter)
+		return;
+
 	FVector playerPosition = playerCharacter->GetActorLocation();
 
 	for (int i = 0; i < m_registeredAgents.Num(); i++) {
@@ -89,7 +106,7 @@ void SDTAIAgentGroupManager::GenerateSurroundingPoints() {
 		m_registeredAgents[i]->SetSurroundingPoint(position);
 		currentAngle += angle;
 
-		DrawDebugSphere(aicontroller->GetWorld(), position + FVector(0.f, 0.f, 100.f), 25.0f, 32, FColor::Purple);
+		DrawDebugSphere(aiController->GetWorld(), position + FVector(0.f, 0.f, 100.f), 25.0f, 32, FColor::Purple);
 	}
 
 }

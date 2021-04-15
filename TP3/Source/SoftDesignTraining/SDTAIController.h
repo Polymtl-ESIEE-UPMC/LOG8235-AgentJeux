@@ -79,9 +79,6 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
     void MoveToPlayer();
 
-    UFUNCTION(BlueprintCallable, Category = AI)
-    void MoveToSurroundingPoints();
-
 	UFUNCTION(BlueprintCallable, Category = AI)
     void MoveToBestFleeLocation();
     void PlayerInteractionLoSUpdate();
@@ -96,7 +93,6 @@ public:
     void SetSurroundingPoint(FVector anchorPoint) { m_surroundingPoint = anchorPoint; }
 
 private:
-    virtual void GoToBestTarget(float deltaTime) override;
     virtual void UpdatePlayerInteraction(float deltaTime) override;
     virtual void ShowNavigationPath() override;
 
