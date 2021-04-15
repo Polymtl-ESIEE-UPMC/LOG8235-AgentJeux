@@ -19,8 +19,6 @@ void ASDTBaseAIController::Tick(float deltaTime)
 
     UpdatePlayerInteraction(deltaTime);
 
-    SDTAIAgentGroupManager::GetInstance()->UnregisterAIAgent(this);
-
     if (m_ReachedTarget)
     {
         GoToBestTarget(deltaTime);
