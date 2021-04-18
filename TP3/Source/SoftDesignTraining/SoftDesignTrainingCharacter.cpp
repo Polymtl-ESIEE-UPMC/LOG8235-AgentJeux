@@ -71,4 +71,7 @@ void ASoftDesignTrainingCharacter::EndPlay(const EEndPlayReason::Type EndPlayRea
     {
         aiAgentGroupManager->Destroy();
     }
+    FrameManager* frameManager = FrameManager::GetInstance();
+    if (frameManager)
+        frameManager->Destroy();
 }

@@ -33,7 +33,7 @@ void FrameManager::Destroy()
 /// </summary>
 /// <param name="frameExecuted"> Actual frame execute </param>
 /// <returns> True or false </returns>
-bool FrameManager::canExecute(uint64& frameExecute) {
+bool FrameManager::CanExecute(uint64& frameExecute) {
 
 	uint64 deltaExecuteTime = GFrameCounter - frameExecute;
 
@@ -49,7 +49,7 @@ bool FrameManager::canExecute(uint64& frameExecute) {
 /// <summary>
 /// Increase AI count and calculate the max execution time
 /// </summary>
-void FrameManager::increaseAiCount()
+void FrameManager::IncreaseAiCount()
 {
 	m_updateAiCount++;
 	m_maxExecutionTime = (int) ceil(m_updateAiCount / m_frameBudget);

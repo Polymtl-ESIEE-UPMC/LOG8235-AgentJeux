@@ -100,6 +100,7 @@ private:
     FrameManager* m_frameManager;
     uint64 m_lastUpdateFrame;
     FVector m_surroundingPoint;
+    bool  m_canExecute;
 
 protected:
     FVector m_JumpTarget;

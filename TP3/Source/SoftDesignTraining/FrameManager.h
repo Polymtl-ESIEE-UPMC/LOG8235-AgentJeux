@@ -2,9 +2,7 @@
 
 #include "CoreMinimal.h"
 
-// Define budget for updating AI at 30 fps
-#define BUDGET 1.0f/30.0f/4.0f
-#define EXECUTION_TIME 0.004f
+
 
 class FrameManager
 {
@@ -12,16 +10,18 @@ public:
 
 	static FrameManager* GetInstance();
 	static void Destroy();
-	bool canExecute(uint64&);
-	void increaseAiCount();
+	bool CanExecute(uint64& frameExecute);
+	void IncreaseAiCount();
 	
 private:
 	//Singleton
 	FrameManager();
 	static FrameManager* m_Instance;
 
-	float m_frameBudget = BUDGET / EXECUTION_TIME;
+	// Define budget for updating AI at 30 fps with only 1/4 of the budget
+	const float m_budget = (1.0f / 30.0f / 2.0f);
+	const float m_execution_time = 0.003f;
+	float m_frameBudget = m_budget / m_execution_time;
 	int m_maxExecutionTime;
 	int m_updateAiCount = 0;
 };
-

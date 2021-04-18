@@ -27,7 +27,7 @@ void ASDTAIController::BeginPlay()
 {
     Super::BeginPlay();
     m_frameManager = FrameManager::GetInstance();
-    m_frameManager->increaseAiCount();
+    m_frameManager->IncreaseAiCount();
 }
 
 
@@ -48,6 +48,11 @@ void ASDTAIController::StartBehaviorTree(APawn* pawn)
 
 void ASDTAIController::MoveToRandomCollectible()
 {
+    //Don't execute if we don't have the budget
+    if (!m_canExecute) {
+        return;
+    }
+
     //Profiling CPU Collectible
     double startTime = FPlatformTime::ToMilliseconds(FPlatformTime::Cycles());
 
@@ -83,6 +88,11 @@ void ASDTAIController::MoveToRandomCollectible()
 
 void ASDTAIController::MoveToPlayer()
 {
+    //Don't execute if we don't have the budget
+    if (!m_canExecute) {
+        return;
+    }
+
     SDTAIAgentGroupManager * groupManager = SDTAIAgentGroupManager::GetInstance();
     groupManager->DrawSphere();
     groupManager->GenerateSurroundingPoints();
@@ -149,6 +159,11 @@ void ASDTAIController::OnPlayerInteractionNoLosDone()
 
 void ASDTAIController::MoveToBestFleeLocation()
 {
+    //Don't execute if we don't have the budget 
+    if (!m_canExecute) {
+        return;
+    }
+
     //Profiling CPU Flee location
     double startTime = FPlatformTime::ToMilliseconds(FPlatformTime::Cycles());
 
@@ -268,9 +283,13 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
 
     DrawDebugString(GetWorld(), FVector(0.f, 0.f, 5.f), debugString, GetPawn(), FColor::Orange, 0.f, false);
 
-    // Verify if we have the budget for this frame
-    if (!m_frameManager->canExecute(m_lastUpdateFrame))
+    // Verify if we have the budget for this frame to execute the AI
+    if (!m_frameManager->CanExecute(m_lastUpdateFrame)) {
+        m_canExecute = false;
         return;
+    }
+    else
+        m_canExecute = true;
 
     //finish jump before updating AI state
     if (AtJumpSegment)
@@ -310,7 +329,7 @@ void ASDTAIController::UpdatePlayerInteraction(float deltaTime)
         m_ReachedTarget = true;
     }
 
-    DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
+    //DrawDebugCapsule(GetWorld(), detectionStartLocation + m_DetectionCapsuleHalfLength * selfPawn->GetActorForwardVector(), m_DetectionCapsuleHalfLength, m_DetectionCapsuleRadius, selfPawn->GetActorQuat() * selfPawn->GetActorUpVector().ToOrientationQuat(), FColor::Blue);
 }
 
 bool ASDTAIController::HasLoSOnHit(const FHitResult& hit)
