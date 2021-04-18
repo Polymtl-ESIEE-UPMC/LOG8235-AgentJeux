@@ -18,10 +18,10 @@ private:
 	FrameManager();
 	static FrameManager* m_Instance;
 
-	// Define budget for updating AI at 30 fps with only 1/4 of the budget
+	// Define budget for updating AI at 30 fps with only 1/2 of the budget
 	const float m_budget = (1.0f / 30.0f / 2.0f);
 	const float m_execution_time = 0.003f;
-	float m_frameBudget = m_budget / m_execution_time;
+	float m_frameBudgetAI = m_budget / m_execution_time;
 	int m_maxExecutionTime;
 	int m_updateAiCount = 0;
 };

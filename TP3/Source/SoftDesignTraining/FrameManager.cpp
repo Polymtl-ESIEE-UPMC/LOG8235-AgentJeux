@@ -52,6 +52,6 @@ bool FrameManager::CanExecute(uint64& frameExecute) {
 void FrameManager::IncreaseAiCount()
 {
 	m_updateAiCount++;
-	m_maxExecutionTime = (int) ceil(m_updateAiCount / m_frameBudget);
+	m_maxExecutionTime = (int) ceil(m_updateAiCount / m_frameBudgetAI);
 }
 
